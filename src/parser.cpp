@@ -70,7 +70,7 @@ void Parser::parse_tables() {
 
 std::string Parser::parse_identifier() {
     if (current_token_ != quick::genesis::tok_name) {
-        // std::cerr << "Expected identifier but got token: " << current_token_ << std::endl;
+        std::cerr << "Expected identifier but got token: " << current_token_ << std::endl;
         // std::cerr << "Identifier string: " << lexer_->id_str() << std::endl;
         // throw std::runtime_error("Expected identifier");
     }
@@ -98,7 +98,6 @@ std::shared_ptr<Field> Parser::parse_field() {
         default:
             throw std::runtime_error("Expected type");
     }
-
     std::string field_name = parse_identifier();
     advance(); 
 

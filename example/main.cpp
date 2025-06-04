@@ -116,27 +116,7 @@ table Tab5{
 
     std::cout << "\nTables:\n";
     for (auto table : ast->tables_) {
-        std::cout << "  Table: " << table->name_ << "\n";
-        std::cout << "    Fields:\n";
-        for (auto field : table->fields_) {
-            std::cout << "      " << field->name_ << " (" 
-                      << (field->is_primary_ ? "PRIMARY " : "")
-                      << (field->type_ == quick::genesis::FieldType::Int ? "int" :
-                          field->type_ == quick::genesis::FieldType::String ? "string" :
-                          field->type_ == quick::genesis::FieldType::Double ? "double" :
-                          field->type_ == quick::genesis::FieldType::Bool ? "bool" :
-                          field->type_ == quick::genesis::FieldType::Char ? "char" :
-                          "custom:" + field->custom_type_) << ")\n";
-        }
-
-        std::cout << "    Relations:\n";
-        for (auto rel : table->relations_) {
-            std::cout << "      " << rel->field_name_ << " -> " << rel->target_table_ << " ("
-                      << (rel->type_ == quick::genesis::RelationType::OneToOne ? "ONE_TO_ONE" :
-                          rel->type_ == quick::genesis::RelationType::OneToMany ? "ONE_TO_MANY" :
-                          rel->type_ == quick::genesis::RelationType::ManyToOne ? "MANY_TO_ONE" :
-                          "MANY_TO_MANY") << ")\n";
-        }
+        std::cout << table->to_string() << std::endl;
     }
 
     return 0;
