@@ -1,32 +1,8 @@
-/*
 #include "parser.hpp"
 #include <iostream>
 #include <sstream>
 
-int main() {
-    const std::string input_str = R"(
-import Tab1;
-import Tab2;
-import Tab3;
-import Tab4;
-
-table Tab5{
-    PRIMARY int id;
-    string name;
-    double rating;
-    bool is_b;
-    char c;
-    ONE_TO_ONE(Tab1) tab1;
-    ONE_TO_MANY(Tab2) tabs;
-    MANY_TO_ONE(Tab3) tab3;
-    MANY_TO_MANY(Tab4) tabs2;
-}
-)";
-
-    std::istringstream input(input_str);
-    
-
-
+void tok(std::istream& input){
     int token;
     quick::genesis::Lexer lexer;
     while ((token = lexer.get_tok(input)) != quick::genesis::tok_eof) {
@@ -58,9 +34,6 @@ table Tab5{
             case quick::genesis::tok_many_to_many:
                 std::cout << "MANY_TO_MANY\n";
                 break;
-            case quick::genesis::tok_ref:
-                std::cout << "REF: " << lexer.id_str() << "\n";
-                break;
             case ';':
                 std::cout << "SEMICOLON\n\n";
                 break;
@@ -74,15 +47,7 @@ table Tab5{
                 std::cout << "CHAR: " << static_cast<char>(token) << "\n";
         }
     }
-
-    return 0;
 }
-*/
-
-
-#include "parser.hpp"
-#include <iostream>
-#include <sstream>
 
 int main() {
     const std::string input_str = R"(
@@ -102,9 +67,15 @@ table Tab5{
     MANY_TO_ONE(Tab3) tab3;
     MANY_TO_MANY(Tab4) tabs2;
 }
+
+table lol{
+    PRIMARY int id;
+    string email;
+}
 )";
 
     std::istringstream input(input_str);
+    // tok(input);
     quick::genesis::Parser parser(input);
     auto ast = parser.parse();
 
@@ -112,7 +83,6 @@ table Tab5{
     for (auto imp : ast->imports_) {
         std::cout << "  " << imp->table_name_ << "\n";
     }
-
 
     std::cout << "\nTables:\n";
     for (auto table : ast->tables_) {

@@ -9,7 +9,6 @@ namespace genesis {
 Lexer::Lexer() 
     : last_char_(' '), 
     num_val_(0.0), 
-    in_ref_(0), 
     data_types_({"int", "string", "double", "bool", "char"}){
 
 }
@@ -49,23 +48,8 @@ int Lexer::get_tok(std::istream& input) {
             return tok_type;
         }
 
-        if (in_ref_) {
-            in_ref_ = 0;
-            return tok_ref;
-        }
 
         return tok_name;
-    }
-    if (last_char_ == '(') {
-        in_ref_ = 1;  
-        last_char_ = input.get();
-        return '(';
-    }
-
-    if (last_char_ == ')') {
-        in_ref_ = 0;  
-        last_char_ = input.get();
-        return ')';
     }
 
     if (std::isdigit(last_char_) || last_char_ == '.') {
@@ -96,20 +80,7 @@ int Lexer::get_tok(std::istream& input) {
     int this_char = last_char_;
     last_char_ = input.get();
 
-    switch (this_char) {
-        case '=': return '=';
-        case ';': return ';';
-        case '{': return '{';
-        case '}': return '}';
-        case '(': 
-            in_ref_ = 1;  
-            return '(';
-        case ')': 
-            in_ref_ = 0;  
-            return ')';
-        case ',': return ',';
-        case ':': return ':';
-    }
+    
 
     return this_char;
 }

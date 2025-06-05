@@ -18,14 +18,12 @@ enum TOKEN {
     tok_one_to_many = -8,    
     tok_many_to_one = -9,    
     tok_many_to_many = -10, 
-    tok_name = -11,   
-    tok_ref = -12  
+    tok_name = -11
 };
 
 class Lexer{
     int last_char_;
     double num_val_;
-    int in_ref_;
     std::string id_str_;
     const std::vector<std::string> data_types_;
     int is_data_type(const std::string& str);
