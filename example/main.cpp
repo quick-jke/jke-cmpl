@@ -2,52 +2,7 @@
 #include <iostream>
 #include <sstream>
 
-void tok(std::istream& input){
-    int token;
-    quick::genesis::Lexer lexer;
-    while ((token = lexer.get_tok(input)) != quick::genesis::tok_eof) {
-        switch (token) {
-            case quick::genesis::tok_import:
-                std::cout << "IMPORT\n";
-                break;
-            case quick::genesis::tok_table:
-                std::cout << "TABLE\n";
-                break;
-            case quick::genesis::tok_primary:
-                std::cout << "PRIMARY\n";
-                break;
-            case quick::genesis::tok_type:
-                std::cout << "TYPE: " << lexer.id_str() << "\n";
-                break;
-            case quick::genesis::tok_name:
-                std::cout << "NAME: " << lexer.id_str() << "\n";
-                break;
-            case quick::genesis::tok_one_to_one:
-                std::cout << "ONE_TO_ONE\n";
-                break;
-            case quick::genesis::tok_one_to_many:
-                std::cout << "ONE_TO_MANY\n";
-                break;
-            case quick::genesis::tok_many_to_one:
-                std::cout << "MANY_TO_ONE\n";
-                break;
-            case quick::genesis::tok_many_to_many:
-                std::cout << "MANY_TO_MANY\n";
-                break;
-            case ';':
-                std::cout << "SEMICOLON\n\n";
-                break;
-            case '{':
-                std::cout << "LBRACE\n";
-                break;
-            case '}':
-                std::cout << "RBRACE\n";
-                break;
-            default:
-                std::cout << "CHAR: " << static_cast<char>(token) << "\n";
-        }
-    }
-}
+
 
 int main() {
     const std::string input_str = R"(
@@ -75,19 +30,11 @@ table lol{
 )";
 
     std::istringstream input(input_str);
-    // tok(input);
     quick::genesis::Parser parser(input);
     auto ast = parser.parse();
-
-    std::cout << "Imports:\n";
-    for (auto imp : ast->imports_) {
-        std::cout << "  " << imp->table_name_ << "\n";
-    }
-
-    std::cout << "\nTables:\n";
-    for (auto table : ast->tables_) {
-        std::cout << table->to_string() << std::endl;
-    }
+    std::cout << ast->to_string() << std::endl;
+    // std::cout << parser.analyze() << std::endl;
+    
 
     return 0;
 }

@@ -134,4 +134,52 @@ std::shared_ptr<Relation> Parser::parse_relation() {
 
     return std::make_shared<Relation>(rel_type, target_table, field_name);
 }
+
+std::string Parser::analyze(){
+    std::stringstream oss;
+    int token;
+    while ((token = lexer_->get_tok(input_)) != quick::genesis::tok_eof) {
+        switch (token) {
+            case tok_import:
+                oss << "IMPORT\n";
+                break;
+            case tok_table:
+                oss << "TABLE\n";
+                break;
+            case tok_primary:
+                oss << "PRIMARY\n";
+                break;
+            case tok_type:
+                oss << "TYPE: " << lexer_->id_str() << "\n";
+                break;
+            case tok_name:
+                oss << "NAME: " << lexer_->id_str() << "\n";
+                break;
+            case tok_one_to_one:
+                oss << "ONE_TO_ONE\n";
+                break;
+            case tok_one_to_many:
+                oss << "ONE_TO_MANY\n";
+                break;
+            case tok_many_to_one:
+                oss << "MANY_TO_ONE\n";
+                break;
+            case tok_many_to_many:
+                oss << "MANY_TO_MANY\n";
+                break;
+            case ';':
+                oss << "SEMICOLON\n\n";
+                break;
+            case '{':
+                oss << "LBRACE\n";
+                break;
+            case '}':
+                oss << "RBRACE\n";
+                break;
+            default:
+                oss << "CHAR: " << static_cast<char>(token) << "\n";
+        }
+    }
+    return oss.str();
+}
 }}

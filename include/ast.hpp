@@ -96,6 +96,23 @@ struct Import {
 struct AST {
     std::vector<std::shared_ptr<Import>> imports_;
     std::vector<std::shared_ptr<Table>> tables_;
+
+
+    
+    std::string to_string(){
+        std::stringstream oss;
+        oss << "Imports:\n";
+        for (auto imp : imports_) {
+            oss << "  " << imp->table_name_ << "\n";
+        }
+
+        oss << "\nTables:\n";
+        for (auto table : tables_) {
+            oss << table->to_string() << std::endl;
+        }
+
+        return oss.str();
+    }
 };
 }} //namespace quick::genesis
 #endif // AST_H

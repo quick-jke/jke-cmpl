@@ -8,6 +8,7 @@ class Parser {
 public:
     Parser(std::istream& input);
     std::shared_ptr<AST> parse();
+    std::string analyze();
 
 private:
     std::istream& input_;
