@@ -173,19 +173,19 @@ struct Field {
             }
             oss << "\tstd::string " << name_ << "_between_and(int val1, int val2){ return \"" << name_ << " BETWEEN\" + " << "std::to_string(val1)" << " + \" AND \" + " << "std::to_string(val2);}" << std::endl;
             
-            oss << "\tstd::string " << name_ << "_in(std::vector<int> values){" << std::endl;
-            oss << "std::stringstream oss;" << std::endl;
-            oss << "oss << \"(\";" << std::endl;
-            oss << "for(size_t i = 0; i < values.size(); ++i){" << std::endl;
-            oss << "\t\toss << values.at(i);" << std::endl;
-            oss << "\t\tif(i != values.size() - 1){" << std::endl;
-            oss << "\t\t\t\toss << \", \";" << std::endl;
-            oss << "\t\t}" << std::endl;
-            oss << "}" << std::endl;
-            oss << "oss << \")\";" << std::endl;
-            oss << "return \"rating in \" + oss.str();" << std::endl
-                << "\t}" 
-                << std::endl; 
+            oss << "\tstd::string " << name_ << "_in(std::vector<int> values){" << std::endl
+            << "std::stringstream oss;" << std::endl
+            << "oss << \"(\";" << std::endl
+            << "for(size_t i = 0; i < values.size(); ++i){" << std::endl
+            << "oss << values.at(i);" << std::endl
+            << "if(i != values.size() - 1){" << std::endl
+            << "oss << \", \";" << std::endl
+            << "}" << std::endl
+            << "}" << std::endl
+            << "oss << \")\";" << std::endl
+            << "return \"rating in \" + oss.str();" << std::endl
+            << "\t}" 
+            << std::endl; 
         }else if(type_ == FieldType::String){
             for(auto pair : str_exprs){
                 oss << "\tstd::string " << name_ << pair.first 
@@ -371,6 +371,7 @@ struct AST {
         std::stringstream oss;
         oss << "#include <string>" << std::endl;
         oss << "#include <vector>" << std::endl;
+        oss << "#include <sstream>" << std::endl;
 
         //oss << "#include \"column.hpp\"" << std::endl;
 
