@@ -4,7 +4,7 @@
 #include <vector>
 
 namespace quick {
-namespace genesis {
+namespace jkecmpl {
 
 Lexer::Lexer() 
     : last_char_(' '), 
@@ -84,4 +84,4 @@ int Lexer::get_tok(std::istream& input) {
 
     return this_char;
 }
-}} //namepace quick::genesis
+}} //namepace quick::jkecmpl

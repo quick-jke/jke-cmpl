@@ -6,7 +6,7 @@
 #include <vector>
 
 namespace quick {
-namespace genesis{
+namespace jkecmpl{
 enum TOKEN {
     tok_eof = -1,
     tok_import = -2,
@@ -33,6 +33,6 @@ public:
     int get_tok(std::istream& input);
 };
 
-}} //namespace quick::genesis
+}} //namespace quick::jkecmpl
 
 #endif // TOKEN_H

@@ -35,16 +35,5 @@ std::string content(const std::string& def_path){
     return buffer.str();
 }
 
-void write(const std::string& out_path, const std::string& content) {
-    std::ofstream file(out_path);
-
-    if (!file.is_open()) {
-        throw std::runtime_error("Can not open file " + out_path);
-    }
-
-    file << content; 
-    file.close();
-}
-
 #endif
-// ./jkecmpl --def_path=../example/models/model.def --cpp_out=models
+// ./jkecmpl --def_path=../example/models/model.def --cpp_out=models.txt

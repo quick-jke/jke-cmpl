@@ -2,7 +2,7 @@
 #include <stdexcept>
 
 namespace quick{
-namespace genesis{
+namespace jkecmpl{
 
 Parser::Parser(std::istream& input) : input_(input) {
     ast_ = std::make_shared<AST>();
@@ -65,11 +65,11 @@ void Parser::parse_tables() {
 
         advance();
         ast_->tables_.push_back(table);
-    } while (current_token_ == quick::genesis::tok_table);
+    } while (current_token_ == quick::jkecmpl::tok_table);
 }
 
 std::string Parser::parse_identifier() {
-    if (current_token_ != quick::genesis::tok_name) {
+    if (current_token_ != quick::jkecmpl::tok_name) {
         throw std::runtime_error("Expected identifier");
     }
     std::string name = lexer_->id_str();
@@ -83,7 +83,7 @@ std::shared_ptr<Field> Parser::parse_field() {
     FieldType type;
 
     switch (current_token_) {
-        case quick::genesis::tok_type:
+        case quick::jkecmpl::tok_type:
             type_str = lexer_->id_str();
             advance();
             if (type_str == "int") type = FieldType::Int;
@@ -138,7 +138,7 @@ std::shared_ptr<Relation> Parser::parse_relation() {
 std::string Parser::analyze(){
     std::stringstream oss;
     int token;
-    while ((token = lexer_->get_tok(input_)) != quick::genesis::tok_eof) {
+    while ((token = lexer_->get_tok(input_)) != quick::jkecmpl::tok_eof) {
         switch (token) {
             case tok_import:
                 oss << "IMPORT\n";

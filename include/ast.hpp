@@ -6,7 +6,7 @@
 #include <memory>
 #include <sstream>
 namespace quick {
-namespace genesis{
+namespace jkecmpl{
 enum class FieldType {
     Int,
     String,
@@ -22,22 +22,49 @@ struct Field {
     std::string custom_type_; 
     bool is_primary_ = false;
 
+
+
     Field(const std::string& name, FieldType type)
         : name_(name), type_(type) {}
 
     Field(const std::string& name, const std::string& custom_type)
         : name_(name), type_(FieldType::Custom), custom_type_(custom_type) {}
 
+
+    std::string type(){
+        std::stringstream oss;
+        oss << (type_ == FieldType::Int ? "int " :
+                          type_ == FieldType::String ? "std::string " :
+                          type_ == FieldType::Double ? "double " :
+                          type_ == FieldType::Bool ? "bool " :
+                          type_ == FieldType::Char ? "char " :
+                          "custom:" + custom_type_);
+        return oss.str();
+    }
+
     std::string to_string(){
         std::stringstream oss;
-        oss << "      " << name_ << " (" 
-                      << (is_primary_ ? "PRIMARY " : "")
-                      << (type_ == FieldType::Int ? "int" :
-                          type_ == FieldType::String ? "string" :
-                          type_ == FieldType::Double ? "double" :
-                          type_ == FieldType::Bool ? "bool" :
-                          type_ == FieldType::Char ? "char" :
-                          "custom:" + custom_type_) << ")\n";
+        oss << "\t" << type() << name_ << "_;" << std::endl;
+        return oss.str();
+    }
+
+    std::string setter(){
+        std::stringstream oss;
+        oss << "\t" << "void set_" << name_ << "(" << 
+        (type_ == FieldType::Int ? "int " :
+                          type_ == FieldType::String ? "const std::string& " :
+                          type_ == FieldType::Double ? "double " :
+                          type_ == FieldType::Bool ? "bool " :
+                          type_ == FieldType::Char ? "char " :
+                          "custom:" + custom_type_)
+        << name_ << "){";
+        oss << name_ << "_ = " << name_ << ";" << "}";
+        return oss.str();
+    }
+
+    std::string getter(){
+        std::stringstream oss;
+        oss << "\t" << type() << "get_" << name_ << "(){return " << name_ << "_;}";
         return oss.str();
     }
 };
@@ -59,13 +86,21 @@ struct Relation {
 
     std::string to_string(){
         std::stringstream oss;
-        oss << "      " << field_name_ << " -> " << target_table_ << " ("
+        
+        if(type_ == RelationType::OneToOne){
+            oss << "\t" << target_table_ << " " << field_name_ << ";" << std::endl;
+        }else if(type_ == RelationType::ManyToMany || type_ == RelationType::OneToMany){
+            oss << "\tstd::vector<" << target_table_ << "> " << field_name_ << "_;" << std::endl;
+        }
+        else{
+            oss << "\t//" << field_name_ << " -> " << target_table_ << " ("
                       << (type_ == RelationType::OneToOne ? "ONE_TO_ONE" :
                           type_ == RelationType::OneToMany ? "ONE_TO_MANY" :
                           type_ == RelationType::ManyToOne ? "MANY_TO_ONE" :
                           "MANY_TO_MANY") << ")\n";
+        }
 
-                          return oss.str();
+        return oss.str();
     }
     
 };
@@ -76,15 +111,22 @@ struct Table {
     std::vector<std::shared_ptr<Relation>> relations_;
     std::string to_string(){
         std::stringstream oss;
-        oss << "  Table: " << name_ << "\n";
-        oss << "    Fields:\n";
+        oss << "class " << name_ /*<< " : public SQLTable"*/ << "{" << std::endl;
+        oss << "public:" << std::endl;
+        oss << "\t" << name_ << "(){}" << std::endl;
+        for(auto field : fields_){
+            oss << field->setter() << std::endl;
+            oss << field->getter() << std::endl;
+        }
+        oss << "\nprivate:" << std::endl;
         for(auto field : fields_){
             oss << field->to_string();
         }
-        oss << "    Relations:\n";
+        oss << "//Relations:\n";
         for(auto rel : relations_){
             oss << rel->to_string();
         }
+        oss << "};" << std::endl;
         return oss.str();
     }
 };
@@ -94,19 +136,16 @@ struct Import {
 };
 
 struct AST {
+
     std::vector<std::shared_ptr<Import>> imports_;
     std::vector<std::shared_ptr<Table>> tables_;
 
 
     
-    std::string to_string(){
+    std::string content(){
         std::stringstream oss;
-        oss << "Imports:\n";
-        for (auto imp : imports_) {
-            oss << "  " << imp->table_name_ << "\n";
-        }
-
-        oss << "\nTables:\n";
+        oss << "#include <string>" << std::endl;
+        oss << "#include <vector>" << std::endl;
         for (auto table : tables_) {
             oss << table->to_string() << std::endl;
         }
@@ -114,5 +153,5 @@ struct AST {
         return oss.str();
     }
 };
-}} //namespace quick::genesis
+}} //namespace quick::jkecmpl
 #endif // AST_H

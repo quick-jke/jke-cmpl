@@ -3,7 +3,7 @@
 #include "ast.hpp"
 #include "lexer.hpp"  
 namespace quick {
-namespace genesis{
+namespace jkecmpl{
 class Parser {
 public:
     Parser(std::istream& input);
@@ -25,5 +25,5 @@ private:
     std::shared_ptr<AST> ast_;
     std::shared_ptr<Lexer> lexer_;
 };
-}} //namespace quick::genesis
+}} //namespace quick::jkecmpl
 #endif // PARSER_H

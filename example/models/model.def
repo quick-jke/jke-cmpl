@@ -1,21 +1,47 @@
-import Tab1;
-import Tab2;
-import Tab3;
-import Tab4;
 
-table Tab5{
+
+
+table User{
     PRIMARY int id;
     string name;
-    double rating;
-    bool is_b;
-    char c;
-    ONE_TO_ONE(Tab1) tab1;
-    ONE_TO_MANY(Tab2) tabs;
-    MANY_TO_ONE(Tab3) tab3;
-    MANY_TO_MANY(Tab4) tabs2;
+    string email;
+    string password;
 }
 
-table lol{
+table Review{
     PRIMARY int id;
-    string email;
+    ONE_TO_ONE(Book) book;
+    ONE_TO_ONE(User) user;
+    double rating;
+    string comment;
+}
+
+table Publisher{
+    PRIMARY int id;
+    string name;
+    string adress;
+}
+
+table Order {
+    PRIMARY int id;
+    ONE_TO_ONE(User) user;
+    string date;
+    ONE_TO_MANY(Book) books;
+    string total_price;
+}
+
+table Book{
+    PRIMARY int id;
+    string title;
+    MANY_TO_MANY(Author) authors;
+    ONE_TO_ONE(Publisher) publisher;
+    bool is_bn;
+    string publication_date;
+    string price;
+}
+
+table Author{
+    PRIMARY int id;
+    string name;
+    MANY_TO_MANY(Book) books;
 }
