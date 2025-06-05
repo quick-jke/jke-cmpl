@@ -1,0 +1,21 @@
+import Tab1;
+import Tab2;
+import Tab3;
+import Tab4;
+
+table Tab5{
+    PRIMARY int id;
+    string name;
+    double rating;
+    bool is_b;
+    char c;
+    ONE_TO_ONE(Tab1) tab1;
+    ONE_TO_MANY(Tab2) tabs;
+    MANY_TO_ONE(Tab3) tab3;
+    MANY_TO_MANY(Tab4) tabs2;
+}
+
+table lol{
+    PRIMARY int id;
+    string email;
+}

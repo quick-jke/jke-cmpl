@@ -70,7 +70,7 @@ void Parser::parse_tables() {
 
 std::string Parser::parse_identifier() {
     if (current_token_ != quick::genesis::tok_name) {
-        std::cerr << "Expected identifier but got token: " << current_token_ << std::endl;
+        throw std::runtime_error("Expected identifier");
     }
     std::string name = lexer_->id_str();
     advance();
