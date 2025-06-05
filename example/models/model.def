@@ -24,7 +24,6 @@ table Order {
     PRIMARY int id;
     ONE_TO_ONE(User) user;
     string date;
-    ONE_TO_MANY(Book) books;
     string total_price;
 }
 
@@ -36,6 +35,7 @@ table Book{
     bool is_bn;
     string publication_date;
     string price;
+    MANY_TO_ONE(Order) order;
 }
 
 table Author{
