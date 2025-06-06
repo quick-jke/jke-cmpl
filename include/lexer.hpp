@@ -18,7 +18,8 @@ enum TOKEN {
     tok_one_to_many = -8,    
     tok_many_to_one = -9,    
     tok_many_to_many = -10, 
-    tok_name = -11
+    tok_name = -11,
+    tok_database = -12
 };
 
 class Lexer{

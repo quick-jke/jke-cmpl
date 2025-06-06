@@ -364,6 +364,7 @@ struct Import {
 
 struct AST {
 
+    std::string database_name_;
     std::vector<std::shared_ptr<Import>> imports_;
     std::vector<std::shared_ptr<Table>> tables_;
     
@@ -374,7 +375,7 @@ struct AST {
         oss << "#include <sstream>" << std::endl;
 
         //oss << "#include \"column.hpp\"" << std::endl;
-
+        oss << "namespace " << database_name_ << "{" << std::endl;
         oss << "struct Column {" << std::endl
             << "\tstd::string name;" << std::endl
             << "\tstd::string type;" << std::endl
@@ -387,7 +388,7 @@ struct AST {
         for (auto table : tables_) {
             oss << table->to_string() << std::endl;
         }
-
+        oss << "} // namespace " << database_name_ << std::endl;
         return oss.str();
     }
 };

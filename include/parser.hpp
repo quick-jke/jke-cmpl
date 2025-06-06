@@ -17,6 +17,7 @@ private:
     void advance();
     void parse_imports();
     void parse_tables();
+    void parse_database();
     std::shared_ptr<Table> parse_table();
     std::shared_ptr<Field> parse_field();
     std::shared_ptr<Relation> parse_relation();

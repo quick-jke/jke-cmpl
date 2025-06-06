@@ -43,6 +43,7 @@ int Lexer::get_tok(std::istream& input) {
         if (id_str_ == "ONE_TO_MANY") return tok_one_to_many;
         if (id_str_ == "MANY_TO_ONE") return tok_many_to_one;
         if (id_str_ == "MANY_TO_MANY") return tok_many_to_many;
+        if (id_str_ == "database") return tok_database;
 
         if (is_data_type(id_str_)) {
             return tok_type;

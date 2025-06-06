@@ -1,4 +1,6 @@
 
+database hello;
+
 table User{
     PRIMARY int id;
     string name;

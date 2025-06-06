@@ -16,7 +16,9 @@ std::shared_ptr<AST> Parser::parse() {
             parse_imports();
         } else if (current_token_ == tok_table) {
             parse_tables();
-        } else {
+        } else if(current_token_ == tok_database){
+            parse_database();
+        }else {
             throw std::runtime_error("Unexpected token");
         }
     }
@@ -77,7 +79,6 @@ std::string Parser::parse_identifier() {
     return name;
 }
 
-
 std::shared_ptr<Field> Parser::parse_field() {
     std::string type_str;
     FieldType type;
@@ -104,6 +105,24 @@ std::shared_ptr<Field> Parser::parse_field() {
     } else {
         return std::make_shared<Field>(field_name, type);
     }
+}
+
+void Parser::parse_database() {
+    advance(); 
+    if (!ast_->database_name_.empty()) {
+        throw std::runtime_error("Database already declared");
+    }
+
+    if (current_token_ != tok_name) {
+        throw std::runtime_error("Expected database name after 'database'");
+    }
+
+    ast_->database_name_ = parse_identifier();
+
+    if (current_token_ != ';') {
+        throw std::runtime_error("Expected ';' after database name");
+    }
+    advance(); 
 }
 
 RelationType Parser::get_relation_type(int token) {
