@@ -6,6 +6,10 @@
 #include <memory>
 #include <sstream>
 #include <map>
+#include <unordered_map>
+#include <unordered_set>
+#include <queue>
+#include <memory>
 namespace quick {
 namespace jkecmpl{
 enum class FieldType {
@@ -237,21 +241,10 @@ struct Relation {
     std::string to_string(){
         std::stringstream oss;
         
-        if(type_ == RelationType::OneToOne){
-            oss << "\t" << target_table_ << " " << field_name_ << "; // one to one" << std::endl;
-        }else if(type_ == RelationType::ManyToMany){
-            oss << "\tstd::vector<" << target_table_ << "> " << field_name_ << "_; //" 
-            << (type_ == RelationType::ManyToMany ? "many to many" : "one to many")
-            << std::endl;
-        }else if(type_ == RelationType::ManyToOne){
-            oss << "\t" << target_table_ << " " << field_name_ << "_id;" << std::endl;
-        }
-        else{
-            oss << "\t//" << field_name_ << " -> " << target_table_ << " ("
-                      << (type_ == RelationType::OneToOne ? "ONE_TO_ONE" :
-                          type_ == RelationType::OneToMany ? "ONE_TO_MANY" :
-                          type_ == RelationType::ManyToOne ? "MANY_TO_ONE" :
-                          "MANY_TO_MANY") << ")\n";
+        if(type_ == RelationType::OneToMany || type_ == RelationType::ManyToMany){
+            oss << "\tstd::vector<" << target_table_ << "> " << field_name_ << "_; // " << (type_ == RelationType::OneToMany ? "one to many" : "many to many") << std::endl;
+        }else{
+            oss << "\t" << target_table_ << " " << field_name_ << "_; // " << (type_ == RelationType::ManyToOne ? "many to one" : "one to one") << std::endl;
         }
 
         return oss.str();
@@ -291,10 +284,10 @@ struct Table {
         oss << "\t" << name_ << "(){}" << std::endl;
 
         //namefunc
-        oss << "\tstd::string table_name(){return \"" << name_ << "\";}" << std::endl; 
+        oss << "\tstd::string table_name() const override {return \"" << name_ << "\";}" << std::endl; 
 
         //columns 
-        oss << "\tstd::vector<Column> columns(){" << std::endl;
+        oss << "\tstd::vector<Column> columns() const override {" << std::endl;
         oss << "\t\treturn {" << std::endl;
         for(size_t i = 0; i < fields_.size(); ++i){
             oss << fields_.at(i)->column();
@@ -304,7 +297,7 @@ struct Table {
             oss << std::endl;
         }
         for(size_t i = 0; i < relations_.size(); ++i){
-            if(relations_.at(i)->type_ != RelationType::ManyToMany){
+            if(relations_.at(i)->type_ != RelationType::ManyToMany && relations_.at(i)->type_ != RelationType::OneToMany){
                 oss << relations_.at(i)->column();
                 if(i != relations_.size() - 1){
                     oss << ",";
@@ -315,25 +308,28 @@ struct Table {
         oss << "\t\t};" << std::endl << "\t}" << std::endl;
 
         //values
-        oss << "\tstd::vector<std::string> values(){" << std::endl;
+        oss << "\tstd::vector<std::string> values() const override {" << std::endl;
         oss << "\t\treturn {";
         for(size_t i = 0; i < fields_.size(); ++i){
-            oss << fields_.at(i)->value();
-            if((i != fields_.size() - 1) || relations_.size()){
+            if(i){
                 oss << ", ";
             }
-
+            oss << fields_.at(i)->value();
+            // if((i != fields_.size() - 1) || !relations_.size()){
+                
+            // }
         }
         for(size_t i = 0; i < relations_.size(); ++i){
-            if(relations_.at(i)->type_ != RelationType::ManyToMany ){
-                oss << "\"" << relations_.at(i)->field_name_ << "_id\"";
-                if(i != relations_.size() - 1){
-                    oss << ", ";
-                }
-                // oss << std::endl;
+            if(relations_.at(i)->type_ != RelationType::ManyToMany && relations_.at(i)->type_ != RelationType::OneToMany ){
+                oss << ", \"" << relations_.at(i)->field_name_ << "_id\"";
             }
         }
         oss << "};\n\t};" << std::endl;
+
+        //links
+        oss << "\tstd::vector<Link> links() const override {" << std::endl;
+        oss << "\t\treturn {};" << std::endl;
+        oss << "\t}" << std::endl;
         
         //setters/getters
         for(auto field : fields_){
@@ -373,8 +369,101 @@ struct AST {
     std::string database_name_;
     std::vector<std::shared_ptr<Import>> imports_;
     std::vector<std::shared_ptr<Table>> tables_;
+
+    std::vector<std::shared_ptr<Table>> topological_sort() {
+        int n = tables_.size();
+        std::unordered_map<std::string, int> tableIndexMap;
+
+        // Сопоставляем имя таблицы с индексом
+        for (int i = 0; i < n; ++i) {
+            tableIndexMap[tables_[i]->name_] = i;
+        }
+
+        // Список смежности и входящие степени
+        std::vector<std::vector<int>> adj(n);
+        std::vector<int> in_degree(n, 0);
+
+        // Проверка отношений и построение графа
+        for (int i = 0; i < n; ++i) {
+            const auto& table = tables_[i];
+            for (const auto& relation : table->relations_) {
+                const std::string& targetName = relation->target_table_;
+
+                // Проверка наличия целевой таблицы
+                auto targetIt = tableIndexMap.find(targetName);
+                if (targetIt == tableIndexMap.end()) {
+                    continue;  // Или выбросить ошибку, если таблица не найдена
+                }
+                int targetIdx = targetIt->second;
+
+                if (relation->type_ == RelationType::ManyToOne) {
+                    // ManyToOne: текущая таблица зависит от целевой
+                    adj[targetIdx].push_back(i);
+                    in_degree[i]++;
+                } else if (relation->type_ == RelationType::OneToOne) {
+                    // OneToOne: текущая таблица зависит от целевой
+                    adj[targetIdx].push_back(i);
+                    in_degree[i]++;
+                } else if (relation->type_ == RelationType::OneToMany) {
+                    // OneToMany: проверяем, есть ли ManyToOne в целевой таблице
+                    const auto& targetTable = tables_[targetIdx];
+                    bool hasInverse = false;
+                    for (const auto& invRel : targetTable->relations_) {
+                        if (invRel->type_ == RelationType::ManyToOne &&
+                            invRel->target_table_ == table->name_) {
+                            hasInverse = true;
+                            break;
+                        }
+                    }
+                    if (!hasInverse) {
+                        throw std::runtime_error("Ошибка: отношение OneToMany из '" + table->name_ +
+                                                "' к '" + targetName +
+                                                "' требует наличия ManyToOne в целевой таблице.");
+                    }
+                    // ManyToOne уже обработано ранее, ребро не добавляем повторно
+                }
+                // ManyToMany игнорируем
+            }
+        }
+
+        // Поиск вершин с нулевой входящей степенью
+        std::queue<int> queue;
+        for (int i = 0; i < n; ++i) {
+            if (in_degree[i] == 0) {
+                queue.push(i);
+            }
+        }
+
+        std::vector<int> result;
+        while (!queue.empty()) {
+            int u = queue.front();
+            queue.pop();
+            result.push_back(u);
+
+            for (int v : adj[u]) {
+                in_degree[v]--;
+                if (in_degree[v] == 0) {
+                    queue.push(v);
+                }
+            }
+        }
+
+        // Проверка на циклы
+        if (result.size() != n) {
+            throw std::runtime_error("Ошибка: граф содержит цикл, топологическая сортировка невозможна.");
+        }
+
+        // Строим результат
+        std::vector<std::shared_ptr<Table>> sortedTables;
+        for (int idx : result) {
+            sortedTables.push_back(tables_[idx]);
+        }
+
+        return sortedTables;
+    }
     
     std::string content(){
+        auto tables = topological_sort();
         std::stringstream oss;
         oss << "//Auto-generated file" << std::endl << "//do not edit" << std::endl;
         oss << "#include <string>" << std::endl;
@@ -391,20 +480,23 @@ struct AST {
             << "\tbool is_auto_increment = false;" << std::endl
             << "\tbool is_nullable = true;" << std::endl
             << "\tstd::string default_value;" << std::endl
-            << "};" << std::endl;
+            << "};" << std::endl << std::endl;
+
+        //temp Link
+        oss << "struct Link{};" << std::endl << std::endl;
         //temp SQLTable interface
-        oss << "class SQLTable{};" << std::endl;
+        oss << "class SQLTable{\npublic:\n\tSQLTable() = default;\n\tvirtual std::string table_name() const = 0;\n\tvirtual std::vector<Column> columns() const = 0;\n\tvirtual std::vector<Link> links() const = 0;\n\tvirtual std::vector<std::string> values() const = 0;\n\tvirtual ~SQLTable() = default;\n};" << std::endl << std::endl;
 
 
         
-        for(auto table : tables_) {
+        for(auto table : tables) {
             oss << table->to_string() << std::endl;
         }
 
         oss << "static const std::vector<SQLTable> pure_tables = {";
-        for(size_t i = 0; i < tables_.size(); ++i){
-            oss << tables_.at(i)->name_ << "()";
-            if(i != tables_.size() - 1){
+        for(size_t i = 0; i < tables.size(); ++i){
+            oss << tables.at(i)->name_ << "()";
+            if(i != tables.size() - 1){
                 oss << ", ";
             }
         }

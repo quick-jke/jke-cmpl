@@ -26,6 +26,7 @@ table Publisher{
 table Order {
     PRIMARY int id;
     ONE_TO_ONE(User) user;
+    ONE_TO_MANY(Book) books;
     string date;
     string total_price;
 }
