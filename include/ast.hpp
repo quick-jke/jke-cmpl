@@ -172,20 +172,7 @@ struct Field {
                 << "value){ return \"" << name_ << pair.second << "\" + " << "std::to_string(value);}" << std::endl;
             }
             oss << "\tstd::string " << name_ << "_between_and(int val1, int val2){ return \"" << name_ << " BETWEEN\" + " << "std::to_string(val1)" << " + \" AND \" + " << "std::to_string(val2);}" << std::endl;
-            
-            oss << "\tstd::string " << name_ << "_in(std::vector<int> values){" << std::endl
-            << "\t\tstd::stringstream oss;" << std::endl
-            << "\t\toss << \"(\";" << std::endl
-            << "\t\tfor(size_t i = 0; i < values.size(); ++i){" << std::endl
-            << "\t\t\toss << values.at(i);" << std::endl
-            << "\t\t\tif(i != values.size() - 1){" << std::endl
-            << "\t\t\t\toss << \", \";" << std::endl
-            << "\t\t\t}" << std::endl
-            << "\t\t}" << std::endl
-            << "\t\toss << \")\";" << std::endl
-            << "\t\treturn \"rating in \" + oss.str();" << std::endl
-            << "\t}" 
-            << std::endl; 
+             
         }else if(type_ == FieldType::String){
             for(auto pair : str_exprs){
                 oss << "\tstd::string " << name_ << pair.first 
@@ -206,7 +193,26 @@ struct Field {
                 << "(){ return \"" << name_ << pair.second << "\";}"
                 << std::endl;
         }
-
+        if(type_ != FieldType::Bool){
+            oss << "\tstd::string " << name_ << "_in(std::vector<" 
+                << (type_ == FieldType::Int ? "int" :
+                    type_ == FieldType::Double ? "double" :
+                    type_ == FieldType::String ? "std::string" :
+                    type_ == FieldType::Char ? "char" : "custom: " + custom_type_)
+                << "> values){" << std::endl
+                << "\t\tstd::stringstream oss;" << std::endl
+                << "\t\toss << \"(\";" << std::endl
+                << "\t\tfor(size_t i = 0; i < values.size(); ++i){" << std::endl
+                << "\t\t\toss << values.at(i);" << std::endl
+                << "\t\t\tif(i != values.size() - 1){" << std::endl
+                << "\t\t\t\toss << \", \";" << std::endl
+                << "\t\t\t}" << std::endl
+                << "\t\t}" << std::endl
+                << "\t\toss << \")\";" << std::endl
+                << "\t\treturn \"" << name_ << " in \" + oss.str();" << std::endl
+                << "\t}" 
+                << std::endl;
+        }
         
 
         return oss.str();
@@ -370,6 +376,7 @@ struct AST {
     
     std::string content(){
         std::stringstream oss;
+        oss << "//Auto-generated file" << std::endl << "//do not edit" << std::endl;
         oss << "#include <string>" << std::endl;
         oss << "#include <vector>" << std::endl;
         oss << "#include <sstream>" << std::endl;
