@@ -36,4 +36,3 @@ std::string content(const std::string& def_path){
 }
 
 #endif
-// ./jkecmpl --def_path=../example/models/model.def --cpp_out=models.txt

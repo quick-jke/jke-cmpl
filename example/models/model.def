@@ -2,6 +2,7 @@
 table User{
     PRIMARY int id;
     string name;
+    int age;
     string email;
     string password;
 }
