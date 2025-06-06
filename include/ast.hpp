@@ -284,7 +284,7 @@ struct Table {
 
     std::string to_string(){
         std::stringstream oss;
-        oss << "class " << name_ /*<< " : public SQLTable"*/ << "{" << std::endl;
+        oss << "class " << name_ << " : public SQLTable" << "{" << std::endl;
         oss << "public:" << std::endl;
 
         //cunstructor
@@ -383,6 +383,7 @@ struct AST {
 
         //oss << "#include \"column.hpp\"" << std::endl;
         oss << "namespace " << database_name_ << "{" << std::endl;
+        //temp Column
         oss << "struct Column {" << std::endl
             << "\tstd::string name;" << std::endl
             << "\tstd::string type;" << std::endl
@@ -391,10 +392,23 @@ struct AST {
             << "\tbool is_nullable = true;" << std::endl
             << "\tstd::string default_value;" << std::endl
             << "};" << std::endl;
+        //temp SQLTable interface
+        oss << "class SQLTable{};" << std::endl;
 
-        for (auto table : tables_) {
+
+        
+        for(auto table : tables_) {
             oss << table->to_string() << std::endl;
         }
+
+        oss << "static const std::vector<SQLTable> pure_tables = {";
+        for(size_t i = 0; i < tables_.size(); ++i){
+            oss << tables_.at(i)->name_ << "()";
+            if(i != tables_.size() - 1){
+                oss << ", ";
+            }
+        }
+        oss << "};" << std::endl;
         oss << "} // namespace " << database_name_ << std::endl;
         return oss.str();
     }
