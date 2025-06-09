@@ -10,6 +10,7 @@
 #include <unordered_set>
 #include <queue>
 #include <memory>
+#include <cctype>
 namespace quick {
 namespace jkecmpl{
 enum class FieldType {
@@ -49,6 +50,7 @@ struct Relation {
     Relation(RelationType type, const std::string& target_table, const std::string& field_name);
     std::string to_string();
     std::string column();
+    std::string link();
 
     RelationType type_;
     std::string target_table_;
@@ -56,8 +58,8 @@ struct Relation {
 };
 
 struct Table {
-    std::string to_string();
-
+    std::string content();
+    std::string pure();
     std::string name_;
     std::vector<std::shared_ptr<Field>> fields_;
     std::vector<std::shared_ptr<Relation>> relations_;
@@ -70,10 +72,15 @@ struct Import {
 struct AST {
     std::vector<std::shared_ptr<Table>> topological_sort();
     std::string content();
+    std::string struct_column();
+    std::string struct_link();
+    std::string sql_table_class();
+    std::string relations_classes();
+
 
     std::string database_name_;
     std::vector<std::shared_ptr<Import>> imports_;
     std::vector<std::shared_ptr<Table>> tables_;
 };
 }} //namespace quick::jkecmpl
-#endif // AST_H
+#endif 

@@ -11,14 +11,13 @@ config get_cmd_path(int argc, char* argv[]){
     config cfg;
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
-
+        
         if (arg.find("--def_path=") == 0) {
             cfg.def_path = arg.substr(11); 
         } else if (arg.find("--cpp_out=") == 0) {
             cfg.out_path = arg.substr(10); 
         }
     }
-
     return cfg;
 }
 
