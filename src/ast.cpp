@@ -305,11 +305,14 @@ std::string Table::content(){
     oss << "\tstd::vector<quick::ultra::sqljke::Column> columns() const override {" << std::endl;
     oss << "\t\treturn {" << std::endl;
     for(size_t i = 0; i < fields_.size(); ++i){
-        oss << fields_.at(i)->column();
-        if((i != fields_.size() - 1) || relations_.size()){
-            oss << ",";
+        if(!fields_.at(i)->is_primary_){
+            oss << fields_.at(i)->column();
+            if((i != fields_.size() - 1) || relations_.size()){
+                oss << ",";
+            }
+            oss << std::endl;
         }
-        oss << std::endl;
+        
     }
     for(size_t i = 0; i < relations_.size(); ++i){
         if(relations_.at(i)->type_ != RelationType::ManyToMany && relations_.at(i)->type_ != RelationType::OneToMany){
@@ -326,10 +329,13 @@ std::string Table::content(){
     oss << "\tstd::vector<std::string> values() const override {" << std::endl;
     oss << "\t\treturn {";
     for(size_t i = 0; i < fields_.size(); ++i){
-        if(i){
-            oss << ", ";
+        if(!fields_.at(i)->is_primary_){
+            oss << fields_.at(i)->value();
+            if(i != fields_.size() - 1){
+                oss << ", ";
+            }
         }
-        oss << fields_.at(i)->value();
+        
     }
     if(fields_.size()){
         oss << ", ";
