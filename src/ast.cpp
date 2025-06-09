@@ -1,5 +1,5 @@
 #include "ast.hpp"
-
+#include <algorithm>
 
 namespace quick{
 namespace jkecmpl{
@@ -235,9 +235,7 @@ std::string Relation::column(){
 
 std::string Relation::link(){
     std::stringstream oss;
-    if(type_ != RelationType::ManyToMany){
-        oss << "\t\t\t{\"" << field_name_ << "_id\", \"" << target_table_  << "\", \"id\"" << "}";
-    }
+    oss << "\t\t\t{\"" << field_name_ << "_id\", \"" << target_table_  << "\", \"id\"" << "}";
     return oss.str();
 }
 
@@ -276,12 +274,15 @@ std::string Table::pure(){
     oss << "\t\t}," << std::endl
         << "\t\t{" << std::endl;
     for(size_t i = 0; i < relations_.size(); ++i){
-        oss << relations_.at(i)->link();
-        if(i != relations_.size() - 1){
-            oss << "," << std::endl;
-        }else{
-            oss << std::endl;
+        if(relations_.at(i)->type_ != RelationType::ManyToMany && relations_.at(i)->type_ != RelationType::OneToMany){
+            oss << relations_.at(i)->link();
+            if(i != relations_.size() - 1){
+                oss << "," << std::endl;
+            }else{
+                oss << std::endl;
+            }
         }
+        
     }
     oss << "\t\t}" << std::endl
         << "\t}";
@@ -291,7 +292,7 @@ std::string Table::pure(){
 
 std::string Table::content(){
     std::stringstream oss;
-    oss << "class " << name_ << " : public SQLTable" << "{" << std::endl;
+    oss << "class " << name_ << " : public quick::ultra::sqljke::SQLTable" << "{" << std::endl;
     oss << "public:" << std::endl;
 
     //cunstructor
@@ -301,7 +302,7 @@ std::string Table::content(){
     oss << "\tstd::string table_name() const override {return \"" << name_ << "\";}" << std::endl; 
 
     //columns 
-    oss << "\tstd::vector<quick::ultra::Column> columns() const override {" << std::endl;
+    oss << "\tstd::vector<quick::ultra::sqljke::Column> columns() const override {" << std::endl;
     oss << "\t\treturn {" << std::endl;
     for(size_t i = 0; i < fields_.size(); ++i){
         oss << fields_.at(i)->column();
@@ -329,19 +330,22 @@ std::string Table::content(){
             oss << ", ";
         }
         oss << fields_.at(i)->value();
-        // if((i != fields_.size() - 1) || !relations_.size()){
-            
-        // }
+    }
+    if(fields_.size()){
+        oss << ", ";
     }
     for(size_t i = 0; i < relations_.size(); ++i){
         if(relations_.at(i)->type_ != RelationType::ManyToMany && relations_.at(i)->type_ != RelationType::OneToMany ){
-            oss << ", \"" << relations_.at(i)->field_name_ << "_id\"";
+            oss << "\"" << relations_.at(i)->field_name_ << "_id\"";
+            if(i != relations_.size() - 1){
+                oss << ", ";
+            }
         }
     }
     oss << "};\n\t}" << std::endl;
 
     //links
-    oss << "\tstd::vector<quick::ultra::Link> links() const override {" << std::endl;
+    oss << "\tstd::vector<quick::ultra::sqljke::Link> links() const override {" << std::endl;
     oss << "\t\treturn {" << std::endl;
     for(size_t i = 0; i < relations_.size(); ++i){
         oss << relations_.at(i)->link();
@@ -378,7 +382,7 @@ std::string Table::content(){
     for(auto rel : relations_){
         oss << rel->to_string();
     }
-    oss << "\tstd::vector<std::shared_ptr<IRelation>> relations_;" << std::endl;
+    oss << "\tstd::vector<std::shared_ptr<quick::ultra::sqljke::IRelation>> relations_;" << std::endl;
     oss << "};" << std::endl;
     return oss.str();
 }
@@ -429,6 +433,8 @@ std::vector<std::shared_ptr<Table>> AST::topological_sort() {
                 }
             }
         }
+
+        
     }
 
     std::queue<int> queue;
@@ -461,54 +467,45 @@ std::vector<std::shared_ptr<Table>> AST::topological_sort() {
         sortedTables.push_back(tables_[idx]);
     }
 
+    std::vector<std::shared_ptr<Table>> table_has_many_to_many;
+    std::vector<std::shared_ptr<Table>> many_to_many_tables;
+    for(auto table : sortedTables){ 
+        for(auto rel : table->relations_){
+            if(rel->type_ == RelationType::ManyToMany){
+                table_has_many_to_many.push_back(table);
+            }
+        }
+    }
+
+    for (auto table : table_has_many_to_many) {
+        for (auto rel : table->relations_) {
+            if (rel->type_ == RelationType::ManyToMany) {
+                Table mtmt;
+                mtmt.name_ = rel->target_table_ + "_" + table->name_;
+                std::string other_name = table->name_ + "_" + rel->target_table_;
+
+                auto it = std::find_if(many_to_many_tables.begin(), many_to_many_tables.end(),
+                    [&other_name](const std::shared_ptr<Table>& t) {
+                        return t->name_ == other_name;
+                    });
+
+                if (it != many_to_many_tables.end()) {
+                    (*it)->relations_.push_back(std::make_shared<Relation>(RelationType::ManyToOne, rel->target_table_, rel->target_table_));
+                } else {
+                    mtmt.relations_.push_back(std::make_shared<Relation>(RelationType::ManyToOne, rel->target_table_, rel->target_table_));
+                    many_to_many_tables.push_back(std::make_shared<Table>(mtmt));
+                }
+            }
+        }
+    }
+
+    for(auto tb : many_to_many_tables){
+        sortedTables.push_back(tb);
+    }
+
     return sortedTables;
 }
 
-std::string AST::struct_column(){
-    std::stringstream oss;
-    oss << "struct Column {" << std::endl
-        << "\tstd::string name;" << std::endl
-        << "\tstd::string type;" << std::endl
-        << "\tbool is_primary_key = false;" << std::endl
-        << "\tbool is_auto_increment = false;" << std::endl
-        << "\tbool is_nullable = true;" << std::endl
-        << "\tstd::string default_value;" << std::endl
-        << "};" << std::endl << std::endl;
-    return oss.str();
-}
-std::string AST::struct_link(){
-    std::stringstream oss;
-    oss << "struct Link{\n\tstd::string column;\n\tstd::string foreign_table;\n\tstd::string foreign_column;\n};" << std::endl << std::endl;
-    return oss.str();
-}
-std::string AST::sql_table_class(){
-    std::stringstream oss;
-    oss << "class SQLTable{\npublic:\n\tSQLTable() = default;\n\tvirtual std::string table_name() const = 0;\n\tvirtual std::vector<quick::ultra::Column> columns() const = 0;\n\tvirtual std::vector<quick::ultra::Link> links() const = 0;\n\tvirtual std::vector<std::string> values() const = 0;\n\tvirtual ~SQLTable() = default;\n};" << std::endl << std::endl;
-    return oss.str();
-}
-std::string AST::relations_classes(){
-    std::stringstream oss;
-    oss << "struct IRelation{" << std::endl
-        << "public:" << std::endl
-        << "};" << std::endl
-        << "struct OneToOneRelation : public IRelation {" << std::endl
-        << "\tstd::shared_ptr<SQLTable> first_;" << std::endl
-        << "\tstd::shared_ptr<SQLTable> second_;" << std::endl
-        << "};" << std::endl
-        << "struct OneToManyRelation : public IRelation {" << std::endl
-        << "\tstd::shared_ptr<SQLTable> one_;" << std::endl
-        << "\tstd::shared_ptr<SQLTable> many_;" << std::endl
-        << "};" << std::endl
-        << "struct ManyToOneRelation : public IRelation {" << std::endl
-        << "\tstd::shared_ptr<SQLTable> many_;" << std::endl
-        << "\tstd::shared_ptr<SQLTable> one_;" << std::endl
-        << "};" << std::endl
-        << "struct ManyToManyRelation : public IRelation {" << std::endl
-        << "\tstd::shared_ptr<SQLTable> first_;" << std::endl
-        << "\tstd::shared_ptr<SQLTable> second_;" << std::endl
-        << "};" << std::endl << std::endl;
-    return oss.str();
-}
 
 
 std::string AST::content(){
@@ -521,27 +518,13 @@ std::string AST::content(){
     oss << "#include <memory>" << std::endl;
     oss << "#include \"session.hpp\"" << std::endl;
     
-    
-    // //temp Column
-    // oss << struct_column();
-    // //temp Link
-    // oss << struct_link();
-    // //temp pure
-    // oss << pure_table();
-    //temp SQLTable interface
-    oss << sql_table_class();
-    //temp relations
-    oss << relations_classes();
-    //oss << "#include \"column.hpp\"" << std::endl;
     oss << "namespace " << database_name_ << "{" << std::endl;
     
     for(auto table : tables) {
         oss << table->content() << std::endl;
     }
 
-    
-
-    oss << "static const std::vector<quick::ultra::PureTable> pure_tables = {";
+    oss << "static const std::vector<quick::ultra::sqljke::PureTable> pure_tables = {";
     for(size_t i = 0; i < tables.size(); ++i) {
         oss << tables.at(i)->pure();
         if(i != tables.size() - 1) oss << ",";

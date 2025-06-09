@@ -1,6 +1,6 @@
 #ifndef AST_H
 #define AST_H
-
+#include <iostream>
 #include <string>
 #include <vector>
 #include <memory>
@@ -75,7 +75,6 @@ struct AST {
     std::string struct_column();
     std::string struct_link();
     std::string sql_table_class();
-    std::string relations_classes();
 
 
     std::string database_name_;
