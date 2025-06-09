@@ -298,10 +298,69 @@ std::string Table::content(){
     //cunstructor
     oss << "\t" << name_ << "(){}" << std::endl;
 
+    //resultset constructor
+    if(fields_.size()){
+        oss << "\texplicit " << name_ << "(quick::ultra::ResultSet& rs){" << std::endl;
+        for(auto field : fields_){
+            oss << "\t\t" << field->name_ << "_ = rs.get";
+            switch (field->type_)
+            {
+            case FieldType::Bool:{
+                oss << "_bool";
+                break;
+            }
+            case FieldType::Char:{
+                oss << "_char";
+                break;
+            }
+            case FieldType::Double:{
+                oss << "_double";
+                break;
+            }
+            case FieldType::Int:{
+                oss << "_int";
+                break;
+            }
+            case FieldType::String:{
+                oss << "_string";
+                break;
+            }
+            
+            default:
+                break;
+            }
+            oss << "(\"" << field->name_ << "\");" << std::endl;
+        }
+        oss << "\t}" << std::endl;
+    }
+    
+    //operator == 
+    if(fields_.size()){
+        oss << "\tfriend bool operator==(const " << name_ << " &a, const " << name_ << " &b){" << std::endl
+            << "\t\treturn" << std::endl;
+        for(size_t i = 0; i < fields_.size(); ++i){
+            if(!fields_.at(i)->is_primary_){
+                oss << "\t\t\t(a." << fields_.at(i)->name_ << "_ == b." << fields_.at(i)->name_ << "_)"; 
+                if(i != fields_.size() - 1){
+                    oss << " && ";
+                }else{
+                    oss << ";";
+                }
+                oss << std::endl;
+            }
+            
+
+        }
+        oss << "\t}" << std::endl;
+    }
+    
+    
+
     //namefunc
     oss << "\tstd::string table_name() const override {return \"" << name_ << "\";}" << std::endl; 
 
     //columns 
+    
     oss << "\tstd::vector<quick::ultra::sqljke::Column> columns() const override {" << std::endl;
     oss << "\t\treturn {" << std::endl;
     for(size_t i = 0; i < fields_.size(); ++i){
@@ -325,6 +384,28 @@ std::string Table::content(){
     }
     oss << "\t\t};" << std::endl << "\t}" << std::endl;
 
+    //column_names
+
+    oss << "\tstd::vector<std::string> column_names() const override {" << std::endl
+        << "\t\treturn {";
+    for(size_t i = 0; i < fields_.size(); ++i){
+        if(!fields_.at(i)->is_primary_){
+            oss << "\"" << fields_.at(i)->name_ << "\"";
+            if((i != fields_.size() - 1) || relations_.size()){
+                oss << ",";
+            }
+        }
+    }
+    for(size_t i = 0; i < relations_.size(); ++i){
+        if(relations_.at(i)->type_ != RelationType::ManyToMany && relations_.at(i)->type_ != RelationType::OneToMany){
+            oss << "\"" << relations_.at(i)->field_name_ << "_id\"";
+            if(i != relations_.size() - 1){
+                oss << ",";
+            }
+        }
+    }
+
+    oss << "};\n\t}" << std::endl;
     //values
     oss << "\tstd::vector<std::string> values() const override {" << std::endl;
     oss << "\t\treturn {";
@@ -536,6 +617,7 @@ std::string AST::content(){
         if(i != tables.size() - 1) oss << ",";
     }
     oss << "\n};" << std::endl;
+
     oss << "} // namespace " << database_name_ << std::endl;
     return oss.str();
 }
