@@ -48,7 +48,7 @@ std::string Field::getter(){
                         type_ == FieldType::Char ? "char " :
                         "custom:" + custom_type_)
         << name_ 
-        << "(){return " 
+        << (is_primary_ ? "()const override {return " : "(){return ") 
         << name_ << "_;}";
     return oss.str();
 }
@@ -486,6 +486,9 @@ std::string Table::content(){
     oss << "\t}" << std::endl;
     
     //setters/getters
+    if(!fields_.size()){
+        oss << "int id() const override {return -1;}" << std::endl;
+    }
     for(auto field : fields_){
         oss << field->setter() << std::endl;
         oss << field->getter() << std::endl;
