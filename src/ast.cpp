@@ -56,7 +56,7 @@ std::string Field::getter(){
 std::string Field::column(){
     std::stringstream oss;
 
-    oss << "\t\t\t{\"" 
+    oss << "\t\t{\"" 
         << name_ 
         << "\", \"" 
         << (type_ == FieldType::Int ? "int" :
@@ -357,12 +357,10 @@ std::string Table::content(){
     
 
     //namefunc
+    oss << "\tinline static const std::string TABLE_NAME = \"" << name_ << "\";" << std::endl; 
     oss << "\tstd::string table_name() const override {return \"" << name_ << "\";}" << std::endl; 
-
     //columns 
-    
-    oss << "\tstd::vector<quick::ultra::sqljke::Column> columns() const override {" << std::endl;
-    oss << "\t\treturn {" << std::endl;
+    oss << "\tinline static const std::vector<quick::ultra::sqljke::Column> COLUMNS = {" << std::endl;
     for(size_t i = 0; i < fields_.size(); ++i){
         if(!fields_.at(i)->is_primary_){
             oss << fields_.at(i)->column();
@@ -382,9 +380,48 @@ std::string Table::content(){
             oss << std::endl;
         }
     }
+    oss << "\t};" << std::endl << std::endl;
+
+    oss << "\tstd::vector<quick::ultra::sqljke::Column> columns() const override {" << std::endl;
+    oss << "\t\treturn {" << std::endl;
+    for(size_t i = 0; i < fields_.size(); ++i){
+        oss << fields_.at(i)->column();
+        if((i != fields_.size() - 1) || relations_.size()){
+            oss << ",";
+        }
+        oss << std::endl;
+        
+    }
+    for(size_t i = 0; i < relations_.size(); ++i){
+        if(relations_.at(i)->type_ != RelationType::ManyToMany && relations_.at(i)->type_ != RelationType::OneToMany){
+            oss << relations_.at(i)->column();
+            if(i != relations_.size() - 1){
+                oss << ",";
+            }
+            oss << std::endl;
+        }
+    }
     oss << "\t\t};" << std::endl << "\t}" << std::endl;
 
     //column_names
+    oss << "\tinline static const std::vector<std::string> COLUMN_NAMES = {";
+    for(size_t i = 0; i < fields_.size(); ++i){
+        if(!fields_.at(i)->is_primary_){
+            oss << "\"" << fields_.at(i)->name_ << "\"";
+            if((i != fields_.size() - 1) || relations_.size()){
+                oss << ",";
+            }
+        }
+    }
+    for(size_t i = 0; i < relations_.size(); ++i){
+        if(relations_.at(i)->type_ != RelationType::ManyToMany && relations_.at(i)->type_ != RelationType::OneToMany){
+            oss << "\"" << relations_.at(i)->field_name_ << "_id\"";
+            if(i != relations_.size() - 1){
+                oss << ",";
+            }
+        }
+    }
+    oss << "};" << std::endl;
 
     oss << "\tstd::vector<std::string> column_names() const override {" << std::endl
         << "\t\treturn {";
@@ -435,12 +472,15 @@ std::string Table::content(){
     oss << "\tstd::vector<quick::ultra::sqljke::Link> links() const override {" << std::endl;
     oss << "\t\treturn {" << std::endl;
     for(size_t i = 0; i < relations_.size(); ++i){
-        oss << relations_.at(i)->link();
-        if(i != relations_.size() - 1){
-            oss << "," << std::endl;
-        }else{
-            oss << std::endl;
+        if(relations_.at(i)->type_ != RelationType::ManyToMany && relations_.at(i)->type_ != RelationType::OneToMany ){
+            oss << relations_.at(i)->link();
+            if(i != relations_.size() - 1){
+                oss << "," << std::endl;
+            }else{
+                oss << std::endl;
+            }
         }
+        
     }
     oss << "\t\t};" << std::endl;
     oss << "\t}" << std::endl;
@@ -606,10 +646,17 @@ std::string AST::content(){
     oss << "#include \"session.hpp\"" << std::endl;
     
     oss << "namespace " << database_name_ << "{" << std::endl;
-    
+    oss << "inline const std::string DATABASE_NAME = \"" << database_name_ << "\";" << std::endl;
     for(auto table : tables) {
         oss << table->content() << std::endl;
     }
+
+    oss << "static const std::vector<std::shared_ptr<quick::ultra::sqljke::SQLTable>> tables = {";
+        for(size_t i = 0; i < tables.size(); ++i) {
+            oss << "std::make_shared<" << tables.at(i)->name_ << ">()";
+            if(i != tables.size() - 1) oss << ", ";
+        }
+    oss << "};" << std::endl;
 
     oss << "static const std::vector<quick::ultra::sqljke::PureTable> pure_tables = {";
     for(size_t i = 0; i < tables.size(); ++i) {
