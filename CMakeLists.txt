@@ -6,6 +6,6 @@ add_executable(${PROJECT_NAME}
     src/lexer.cpp
     src/parser.cpp
     src/codegen.cpp
-    src/ast.cpp
+    src/ast.cpp 
 )
 target_include_directories(${PROJECT_NAME} PRIVATE include)

@@ -11,6 +11,7 @@
 #include <queue>
 #include <memory>
 #include <cctype>
+#include <set>
 namespace quick {
 namespace jkecmpl{
 enum class FieldType {
@@ -37,7 +38,7 @@ struct Field {
     std::string getter();
     std::string column();
     std::string value();
-    std::string expr();
+    // std::string expr();
 
     std::string name_;
     FieldType type_;
@@ -59,7 +60,6 @@ struct Relation {
 
 struct Table {
     std::string content();
-    std::string pure();
     std::string name_;
     std::vector<std::shared_ptr<Field>> fields_;
     std::vector<std::shared_ptr<Relation>> relations_;
@@ -76,10 +76,13 @@ struct AST {
     std::string struct_link();
     std::string sql_table_class();
 
+    
+
 
     std::string database_name_;
     std::vector<std::shared_ptr<Import>> imports_;
     std::vector<std::shared_ptr<Table>> tables_;
+    std::set<std::pair<std::string, FieldType>> exprs_;
 };
 }} //namespace quick::jkecmpl
 #endif 
