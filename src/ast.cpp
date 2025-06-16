@@ -5,6 +5,39 @@ namespace quick{
 namespace jkecmpl{
 
     //Field
+
+std::string type_to_string(FieldType type, bool i = 0){
+    switch (type)
+    {
+    case FieldType::Int:{
+        return "int ";
+        break;
+    }
+    case FieldType::String:{
+        if(i){return "std::string ";}
+        else{
+            return "std::string& ";
+        }
+        break;
+    }
+    case FieldType::Double:{
+        return "double ";
+        break;
+    }
+    case FieldType::Bool:{
+        return "bool ";
+        break;
+    }
+    case FieldType::Char:{
+        return "char ";
+        break;
+    }
+    default:
+    return "custom:";
+        break;
+    }
+}
+
 Field::Field(const std::string& name, FieldType type) : name_(name), type_(type) {}
 
 Field::Field(const std::string& name, const std::string& custom_type) : name_(name), type_(FieldType::Custom), custom_type_(custom_type) {}
@@ -12,12 +45,7 @@ Field::Field(const std::string& name, const std::string& custom_type) : name_(na
 std::string Field::to_string(){
         std::stringstream oss;
         oss << "\t" 
-            << (type_ == FieldType::Int ? "int " :
-                          type_ == FieldType::String ? "std::string " :
-                          type_ == FieldType::Double ? "double " :
-                          type_ == FieldType::Bool ? "bool " :
-                          type_ == FieldType::Char ? "char " :
-                          "custom:" + custom_type_)
+            << type_to_string(type_, true)
             << name_ 
             << "_;" 
             << std::endl;
@@ -26,13 +54,8 @@ std::string Field::to_string(){
 
 std::string Field::setter(){
     std::stringstream oss;
-    oss << "\t" << "void set_" << name_ << "(" 
-    << (type_ == FieldType::Int ? "int " :
-                        type_ == FieldType::String ? "const std::string& " :
-                        type_ == FieldType::Double ? "double " :
-                        type_ == FieldType::Bool ? "bool " :
-                        type_ == FieldType::Char ? "char " :
-                        "custom:" + custom_type_)
+    oss << "\t" << "void set_" << name_ << "(const " 
+    << type_to_string(type_)
     << name_ << "){";
     oss << name_ << "_ = " << name_ << ";" << "}";
     return oss.str();
@@ -40,13 +63,8 @@ std::string Field::setter(){
 
 std::string Field::getter(){
     std::stringstream oss;
-    oss << "\t" 
-        << (type_ == FieldType::Int ? "int " :
-                        type_ == FieldType::String ? "std::string " :
-                        type_ == FieldType::Double ? "double " :
-                        type_ == FieldType::Bool ? "bool " :
-                        type_ == FieldType::Char ? "char " :
-                        "custom:" + custom_type_)
+    oss << "\tconst " 
+        << type_to_string(type_)
         << name_ 
         << (is_primary_ ? "()const override {return " : "(){return ") 
         << name_ << "_;}";
@@ -59,22 +77,11 @@ std::string Field::column(){
     oss << "\t\t\t{\"" 
         << name_ 
         << "\", \"" 
-        << (type_ == FieldType::Int ? "int" :
-                        type_ == FieldType::String ? "string" :
-                        type_ == FieldType::Double ? "double" :
-                        type_ == FieldType::Bool ? "bool" :
-                        type_ == FieldType::Char ? "char" :
-                        "custom:" + custom_type_)
+        << type_to_string(type_)
         << "\", " 
         << (is_primary_ ? "true, " : "false, ")
         << (is_primary_ ? "true, " : "false, ") 
         << "false, " 
-        // << (type_ == FieldType::Int ? "\"0\"" :
-        //               type_ == FieldType::String ? "\"\"" :
-        //               type_ == FieldType::Double ? "\"0.0\"" :
-        //               type_ == FieldType::Bool ? "\"false\"" :
-        //               type_ == FieldType::Char ? "\"\"" :
-        //               "\"\"")
         << "\"\""
         << "}";
 
@@ -112,14 +119,7 @@ std::string Relation::column(){
         return oss.str();
     }
 
-    oss << "\t\t\t{\"" 
-        << field_name_ << "_id" 
-        << "\", \"int\", "
-        << "false, "
-        << "false, "
-        << "false, "
-        << "\"\""
-        << "}";
+    oss << "\t\t\t{\"" << field_name_ << "_id\", \"int\", false, false, false, \"\"}";
 
     return oss.str();
 }
@@ -132,7 +132,7 @@ std::string Relation::link(){
 
 
     //Table
-std::string toLowerString(std::string str) {
+std::string to_lower_string(std::string str) {
     for (char &c : str) {
         c = std::tolower(c);
     }
@@ -337,19 +337,12 @@ std::string Table::content(){
     
     //setters/getters
     if(!fields_.size()){
-        oss << "int id() const override {return -1;}" << std::endl;
+        oss << "const int id() const override {return -1;}" << std::endl;
     }
     for(auto field : fields_){
         oss << field->setter() << std::endl;
         oss << field->getter() << std::endl;
     }
-
-    //expressions
-    // for(auto field : fields_){
-    //     oss << field->expr() << std::endl;
-    // }
-
-
 
     //private fields
     oss << "\nprivate:" << std::endl;
@@ -485,8 +478,6 @@ std::vector<std::shared_ptr<Table>> AST::topological_sort() {
 
     return sortedTables;
 }
-
-
 
 std::string AST::content(){
     auto tables = topological_sort();
