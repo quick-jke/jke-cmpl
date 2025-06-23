@@ -105,9 +105,9 @@ std::string Relation::to_string(){
     std::stringstream oss;
     
     if(type_ == RelationType::OneToMany || type_ == RelationType::ManyToMany){
-        oss << "//\tstd::vector<" << target_table_ << "> " << field_name_ << "_; // " << (type_ == RelationType::OneToMany ? "one to many" : "many to many") << std::endl;
+        oss << "\tstd::vector<" << target_table_ << "> " << field_name_ << "_; // " << (type_ == RelationType::OneToMany ? "one to many" : "many to many") << std::endl;
     }else{
-        oss << "//\t" << target_table_ << " " << field_name_ << "_; // " << (type_ == RelationType::ManyToOne ? "many to one" : "one to one") << std::endl;
+        oss << "\t" << target_table_ << " " << field_name_ << "_; // " << (type_ == RelationType::ManyToOne ? "many to one" : "one to one") << std::endl;
     }
 
     return oss.str();
@@ -142,6 +142,7 @@ std::string to_lower_string(std::string str) {
 
 std::string Table::content(){
     std::stringstream oss;
+    
     oss << "class " << name_ << " : public quick::ultra::sqljke::SQLTable" << "{" << std::endl;
     oss << "public:" << std::endl;
 

@@ -12,14 +12,31 @@ public:
 
     }
     void write(const std::string& out_path) {
-        std::ofstream file(out_path);
+        for(auto table : ast_->topological_sort()){
+            std::cout << table << std::endl;
+            std::ofstream file(out_path + "/" + table->name_ + ".hpp");
 
-        if (!file.is_open()) {
-            throw std::runtime_error("Can not open file " + out_path);
+            file << "//Auto-generated file" << std::endl << "//do not edit" << std::endl;
+            file << "#include <string>" << std::endl;
+            file << "#include <vector>" << std::endl;
+            file << "#include <sstream>" << std::endl;
+            file << "#include <memory>" << std::endl;
+            file << "#include \"session.hpp\"" << std::endl;
+
+            for(auto rel : table->relations_){
+                file << "#include \"" << rel->target_table_ << ".hpp\"" << std::endl;
+            }
+            
+            file << "namespace " << ast_->database_name_ << "{" << std::endl;
+            file << "inline const std::string DATABASE_NAME = \"" << ast_->database_name_ << "\";" << std::endl;
+
+            file << table->content() << std::endl;
+            
+
+            file << "} // namespace " << ast_->database_name_ << std::endl;
+            file.close();
         }
-
-        file << ast_->content(); 
-        file.close();
+        
     }
 };
 }}//namespace quick::jkecmpl
