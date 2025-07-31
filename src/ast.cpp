@@ -5,7 +5,34 @@ namespace quick{
 namespace jkecmpl{
 
     //Field
-
+std::string type_to_sql(FieldType type){
+    switch (type)
+    {
+    case FieldType::Int:{
+        return "INT";
+        break;
+    }
+    case FieldType::String:{
+        return "VARCHAR(255)";
+        break;
+    }
+    case FieldType::Double:{
+        return "DOUBLE";
+        break;
+    }
+    case FieldType::Bool:{
+        return "DOUBLE";
+        break;
+    }
+    case FieldType::Char:{
+        return "CHAR";
+        break;
+    }
+    default:
+    return "custom:";
+        break;
+    }
+}
 std::string type_to_string(FieldType type, bool i = 0){
     switch (type)
     {
@@ -47,7 +74,8 @@ std::string Field::to_string(){
         oss << "\t" 
             << type_to_string(type_, true)
             << name_ 
-            << "_;" 
+            << "_" 
+            << (is_primary_ ? " = 0;" : ";")
             << std::endl;
         return oss.str();
     }
@@ -77,7 +105,7 @@ std::string Field::column(){
     oss << "\t\t\t{\"" 
         << name_ 
         << "\", \"" 
-        << type_to_string(type_)
+        << type_to_sql(type_)
         << "\", " 
         << (is_primary_ ? "true, " : "false, ")
         << (is_primary_ ? "true, " : "false, ") 
@@ -105,11 +133,27 @@ std::string Relation::to_string(){
     std::stringstream oss;
     
     if(type_ == RelationType::OneToMany || type_ == RelationType::ManyToMany){
-        oss << "\tstd::vector<" << target_table_ << "> " << field_name_ << "_; // " << (type_ == RelationType::OneToMany ? "one to many" : "many to many") << std::endl;
+        oss << "\t//std::vector<" << target_table_ << "> " << field_name_ << "_; // " << (type_ == RelationType::OneToMany ? "one to many" : "many to many") << std::endl;
     }else{
-        oss << "\t" << target_table_ << " " << field_name_ << "_; // " << (type_ == RelationType::ManyToOne ? "many to one" : "one to one") << std::endl;
+        oss << "\tstd::shared_ptr<" << target_table_ << "> " << field_name_ << "_; // " << (type_ == RelationType::ManyToOne ? "many to one" : "one to one") << std::endl;
     }
 
+    return oss.str();
+}
+
+std::string Relation::getter(){
+    std::stringstream oss;
+    if(type_ == RelationType::OneToOne){
+        oss << "\tstd::shared_ptr<" << target_table_ << "> " << field_name_ << "(){ return " << field_name_ << "_;}"; 
+    }
+    return oss.str();
+}
+
+std::string Relation::setter(){
+    std::stringstream oss;
+    if(type_ == RelationType::OneToOne){
+        oss << "\tvoid set_" << field_name_ << "(std::shared_ptr<" << target_table_ << "> " << field_name_ << "){ " << field_name_ << "_ = " << field_name_ << ";}"; 
+    }
     return oss.str();
 }
 
@@ -311,7 +355,7 @@ std::string Table::content(){
     }
     for(size_t i = 0; i < relations_.size(); ++i){
         if(relations_.at(i)->type_ != RelationType::ManyToMany && relations_.at(i)->type_ != RelationType::OneToMany ){
-            oss << "\"" << relations_.at(i)->field_name_ << "_id\"";
+            oss << "std::to_string(" << relations_.at(i)->field_name_ << "_->id())";
             if(i != relations_.size() - 1){
                 oss << ", ";
             }
@@ -345,6 +389,29 @@ std::string Table::content(){
         oss << field->getter() << std::endl;
     }
 
+    for(auto relation : relations_){
+        oss << relation->getter() << std::endl;
+        oss << relation->setter() << std::endl;
+    }
+
+    oss << "\n\tstd::vector<std::shared_ptr<quick::ultra::sqljke::SQLTable>> get_dependent_objects() const override {" << std::endl;
+    oss << "\t\tstd::vector<std::shared_ptr<quick::ultra::sqljke::SQLTable>> result;" << std::endl;
+
+    for (const auto& rel : relations_) {
+        if (rel->type_ == RelationType::OneToOne || rel->type_ == RelationType::ManyToOne) {
+            std::string field_name = rel->field_name_ + "_";
+            oss << "\t\tif (" << field_name << " && " << field_name << "->id() == 0) {" << std::endl;
+            oss << "\t\t\tresult.push_back(" << field_name << ");" << std::endl;
+            oss << "\t\t}" << std::endl;
+        }
+        // OneToMany и ManyToMany — не требуют сохранения "до", обычно они дочерние
+    }
+
+    oss << "\t\treturn result;" << std::endl;
+    oss << "\t}" << std::endl;
+
+    oss << exrs();
+
     //private fields
     oss << "\nprivate:" << std::endl;
     for(auto field : fields_){
@@ -356,8 +423,98 @@ std::string Table::content(){
     for(auto rel : relations_){
         oss << rel->to_string();
     }
+
     oss << "\tstd::vector<std::shared_ptr<quick::ultra::sqljke::IRelation>> relations_;" << std::endl;
     oss << "};" << std::endl;
+    return oss.str();
+}
+
+std::string Table::exrs(){
+    std::stringstream oss;
+    std::set<std::pair<std::string, FieldType>> exprs_;
+    for(auto field : fields_){
+        exprs_.insert({field->name_, field->type_});
+    }
+    std::map<std::string, std::string> int_exprs = {
+        {"_more_than", " > "},        // a > 5                           
+        {"_less_than", " < "},        // a < 5                    
+        {"_more_or_equal", " >= "},    // a >=5                           
+        {"_less_or_equal", " <= "},    // a <=5                           
+        {"_equal", " = "},             // a = 5                      
+        {"_not_equal", " != "}          // a !=5     
+        // a between 5 and 10
+        // in (1, 2, 3)                    
+    };
+    std::map<std::string, std::string> str_exprs = {
+        {"_equal", " = \'\" + "},             // str = 'str'
+        {"_not_equal", " != \'\" + "},         // str !='str'
+        {"_like", " LIKE \'\" + "},           // str LIKE 'str'
+        // str IN ('val1', 'val2')
+    };
+    std::map<std::string, std::string> bool_exprs = {
+        {"_true", " IS TRUE"},
+        {"_false", " IS FALSE"}
+    };
+    std::map<std::string, std::string> null_exprs = {
+        {"_is_null", " IS NULL"},
+        {"_is_not_null", " IS NOT NULL"}
+    };
+    
+
+    for(auto [field_name, field_type] : exprs_){
+        if(field_type == FieldType::Int || field_type == FieldType::Double){
+            for(auto [method_name, method_value] : int_exprs){
+                oss << "\tstatic const std::string " << field_name << method_name << "(" 
+                << (field_type == FieldType::Int ? "int " :
+                    field_type == FieldType::Double ? "double " :
+                    field_type == FieldType::Bool ? "bool " :
+                    field_type == FieldType::Char ? "char " :
+                    "custom: ")
+                << "value){ return \"" << field_name << method_value << "\" + " << "std::to_string(value);}" << std::endl;
+            }
+            oss << "\tstatic const std::string " << field_name << "_between_and(int val1, int val2){ return \"" << field_name << " BETWEEN\" + " << "std::to_string(val1)" << " + \" AND \" + " << "std::to_string(val2);}" << std::endl;
+                
+        }else if(field_type == FieldType::String){
+            for(auto [method_name, method_value] : str_exprs){
+                oss << "\tstatic const std::string " << field_name << method_name
+                << "(const std::string& str_val){"
+                << "return \"" << field_name << method_value << " str_val + \"\'\";}" 
+                << std::endl;
+            }
+        }else if(field_type == FieldType::Bool){
+            for(auto [method_name, method_value] : bool_exprs){
+                oss << "\tstatic const std::string " << field_name << method_name
+                << "(){ return \"" << field_name << method_value << "\";}"
+                << std::endl;
+            }
+        }
+
+        for(auto [method_name, method_value] : null_exprs){
+            oss << "\tstatic const std::string " << field_name << method_name
+                << "(){ return \"" << field_name << method_value << "\";}"
+                << std::endl;
+        }
+        if(field_type != FieldType::Bool){
+            oss << "\tstatic const std::string " << field_name << "_in(std::vector<" 
+                << (field_type == FieldType::Int ? "int" :
+                    field_type == FieldType::Double ? "double" :
+                    field_type == FieldType::String ? "std::string" :
+                    field_type == FieldType::Char ? "char" : "custom: ")
+                << "> values){" << std::endl
+                << "\t\tstd::stringstream oss;" << std::endl
+                << "\t\toss << \"(\";" << std::endl
+                << "\t\tfor(size_t i = 0; i < values.size(); ++i){" << std::endl
+                << "\t\t\toss << values.at(i);" << std::endl
+                << "\t\t\tif(i != values.size() - 1){" << std::endl
+                << "\t\t\t\toss << \", \";" << std::endl
+                << "\t\t\t}" << std::endl
+                << "\t\t}" << std::endl
+                << "\t\toss << \")\";" << std::endl
+                << "\t\treturn \"" << field_name << " in \" + oss.str();" << std::endl
+                << "\t}" 
+                << std::endl;
+        }
+    }                                               
     return oss.str();
 }
 

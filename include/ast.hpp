@@ -52,7 +52,9 @@ struct Relation {
     std::string to_string();
     std::string column();
     std::string link();
-
+    std::string getter();
+    std::string setter();
+    
     RelationType type_;
     std::string target_table_;
     std::string field_name_;
@@ -60,6 +62,7 @@ struct Relation {
 
 struct Table {
     std::string content();
+    std::string exrs();
     std::string name_;
     std::vector<std::shared_ptr<Field>> fields_;
     std::vector<std::shared_ptr<Relation>> relations_;
