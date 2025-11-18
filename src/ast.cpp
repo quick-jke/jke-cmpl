@@ -13,7 +13,7 @@ std::string type_to_sql(FieldType type){
         break;
     }
     case FieldType::String:{
-        return "VARCHAR(255)";
+        return "VARCHAR";
         break;
     }
     case FieldType::Double:{
@@ -104,9 +104,9 @@ std::string Field::column(){
 
     oss << "\t\t\t{\"" 
         << name_ 
-        << "\", \"" 
+        << "\", quick::ultra::sqljke::" 
         << type_to_sql(type_)
-        << "\", " 
+        << ", " 
         << (is_primary_ ? "true, " : "false, ")
         << (is_primary_ ? "true, " : "false, ") 
         << "false, " 
@@ -163,7 +163,7 @@ std::string Relation::column(){
         return oss.str();
     }
 
-    oss << "\t\t\t{\"" << field_name_ << "_id\", \"int\", false, false, false, \"\"}";
+    oss << "\t\t\t{\"" << field_name_ << "_id\", quick::ultra::sqljke::INT, false, false, false, \"\"}";
 
     return oss.str();
 }
@@ -266,15 +266,15 @@ std::string Table::content(){
         }
         
     }
-    for(size_t i = 0; i < relations_.size(); ++i){
-        if(relations_.at(i)->type_ != RelationType::ManyToMany && relations_.at(i)->type_ != RelationType::OneToMany){
-            oss << relations_.at(i)->column();
-            if(i != relations_.size() - 1){
-                oss << ",";
-            }
-            oss << std::endl;
-        }
-    }
+    // for(size_t i = 0; i < relations_.size(); ++i){
+    //     if(relations_.at(i)->type_ != RelationType::ManyToMany && relations_.at(i)->type_ != RelationType::OneToMany){
+    //         oss << relations_.at(i)->column();
+    //         if(i != relations_.size() - 1){
+    //             oss << ",";
+    //         }
+    //         oss << std::endl;
+    //     }
+    // }
     oss << "\t};" << std::endl << std::endl;
 
     oss << "\tstd::vector<quick::ultra::sqljke::Column> columns() const override {" << std::endl;
@@ -287,15 +287,15 @@ std::string Table::content(){
         oss << std::endl;
         
     }
-    for(size_t i = 0; i < relations_.size(); ++i){
-        if(relations_.at(i)->type_ != RelationType::ManyToMany && relations_.at(i)->type_ != RelationType::OneToMany){
-            oss << relations_.at(i)->column();
-            if(i != relations_.size() - 1){
-                oss << ",";
-            }
-            oss << std::endl;
-        }
-    }
+    // for(size_t i = 0; i < relations_.size(); ++i){
+    //     if(relations_.at(i)->type_ != RelationType::ManyToMany && relations_.at(i)->type_ != RelationType::OneToMany){
+    //         oss << relations_.at(i)->column();
+    //         if(i != relations_.size() - 1){
+    //             oss << ",";
+    //         }
+    //         oss << std::endl;
+    //     }
+    // }
     oss << "\t\t};" << std::endl << "\t}" << std::endl;
 
     //column_names
@@ -350,33 +350,33 @@ std::string Table::content(){
         }
         
     }
-    if(fields_.size()){
-        oss << ", ";
-    }
-    for(size_t i = 0; i < relations_.size(); ++i){
-        if(relations_.at(i)->type_ != RelationType::ManyToMany && relations_.at(i)->type_ != RelationType::OneToMany ){
-            oss << "std::to_string(" << relations_.at(i)->field_name_ << "_->id())";
-            if(i != relations_.size() - 1){
-                oss << ", ";
-            }
-        }
-    }
+    // if(fields_.size()){
+    //     oss << ", ";
+    // }
+    // for(size_t i = 0; i < relations_.size(); ++i){
+    //     if(relations_.at(i)->type_ != RelationType::ManyToMany && relations_.at(i)->type_ != RelationType::OneToMany ){
+    //         oss << "std::to_string(" << relations_.at(i)->field_name_ << "_->id())";
+    //         if(i != relations_.size() - 1){
+    //             oss << ", ";
+    //         }
+    //     }
+    // }
     oss << "};\n\t}" << std::endl;
 
     //links
     oss << "\tstd::vector<quick::ultra::sqljke::Link> links() const override {" << std::endl;
     oss << "\t\treturn {" << std::endl;
-    for(size_t i = 0; i < relations_.size(); ++i){
-        if(relations_.at(i)->type_ != RelationType::ManyToMany && relations_.at(i)->type_ != RelationType::OneToMany ){
-            oss << relations_.at(i)->link();
-            if(i != relations_.size() - 1){
-                oss << "," << std::endl;
-            }else{
-                oss << std::endl;
-            }
-        }
+    // for(size_t i = 0; i < relations_.size(); ++i){
+    //     if(relations_.at(i)->type_ != RelationType::ManyToMany && relations_.at(i)->type_ != RelationType::OneToMany ){
+    //         oss << relations_.at(i)->link();
+    //         if(i != relations_.size() - 1){
+    //             oss << "," << std::endl;
+    //         }else{
+    //             oss << std::endl;
+    //         }
+    //     }
         
-    }
+    // }
     oss << "\t\t};" << std::endl;
     oss << "\t}" << std::endl;
     
@@ -389,26 +389,26 @@ std::string Table::content(){
         oss << field->getter() << std::endl;
     }
 
-    for(auto relation : relations_){
-        oss << relation->getter() << std::endl;
-        oss << relation->setter() << std::endl;
-    }
+    // for(auto relation : relations_){
+    //     oss << relation->getter() << std::endl;
+    //     oss << relation->setter() << std::endl;
+    // }
 
-    oss << "\n\tstd::vector<std::shared_ptr<quick::ultra::sqljke::SQLTable>> get_dependent_objects() const override {" << std::endl;
-    oss << "\t\tstd::vector<std::shared_ptr<quick::ultra::sqljke::SQLTable>> result;" << std::endl;
+    // oss << "\n\tstd::vector<std::shared_ptr<quick::ultra::sqljke::SQLTable>> get_dependent_objects() const override {" << std::endl;
+    // oss << "\t\tstd::vector<std::shared_ptr<quick::ultra::sqljke::SQLTable>> result;" << std::endl;
 
-    for (const auto& rel : relations_) {
-        if (rel->type_ == RelationType::OneToOne || rel->type_ == RelationType::ManyToOne) {
-            std::string field_name = rel->field_name_ + "_";
-            oss << "\t\tif (" << field_name << " && " << field_name << "->id() == 0) {" << std::endl;
-            oss << "\t\t\tresult.push_back(" << field_name << ");" << std::endl;
-            oss << "\t\t}" << std::endl;
-        }
-        // OneToMany и ManyToMany — не требуют сохранения "до", обычно они дочерние
-    }
+    // for (const auto& rel : relations_) {
+    //     if (rel->type_ == RelationType::OneToOne || rel->type_ == RelationType::ManyToOne) {
+    //         std::string field_name = rel->field_name_ + "_";
+    //         oss << "\t\tif (" << field_name << " && " << field_name << "->id() == 0) {" << std::endl;
+    //         oss << "\t\t\tresult.push_back(" << field_name << ");" << std::endl;
+    //         oss << "\t\t}" << std::endl;
+    //     }
+    //     // OneToMany и ManyToMany — не требуют сохранения "до", обычно они дочерние
+    // }
 
-    oss << "\t\treturn result;" << std::endl;
-    oss << "\t}" << std::endl;
+    // oss << "\t\treturn result;" << std::endl;
+    // oss << "\t}" << std::endl;
 
     oss << exrs();
 
@@ -418,13 +418,13 @@ std::string Table::content(){
         oss << field->to_string();
     }
     //relations
-    relations_.size() && oss << "//Relations:\n";
+    // relations_.size() && oss << "//Relations:\n";
     
-    for(auto rel : relations_){
-        oss << rel->to_string();
-    }
+    // for(auto rel : relations_){
+    //     oss << rel->to_string();
+    // }
 
-    oss << "\tstd::vector<std::shared_ptr<quick::ultra::sqljke::IRelation>> relations_;" << std::endl;
+    // oss << "\tstd::vector<std::shared_ptr<quick::ultra::sqljke::IRelation>> relations_;" << std::endl;
     oss << "};" << std::endl;
     return oss.str();
 }
@@ -646,6 +646,7 @@ std::string AST::content(){
     oss << "#include <sstream>" << std::endl;
     oss << "#include <memory>" << std::endl;
     oss << "#include \"session.hpp\"" << std::endl;
+    // oss << "#include \"type.hpp\"" << std::endl;
     
     oss << "namespace " << database_name_ << "{" << std::endl;
     oss << "inline const std::string DATABASE_NAME = \"" << database_name_ << "\";" << std::endl;

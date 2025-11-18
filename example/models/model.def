@@ -1,50 +1,12 @@
-
-database hello;
+database one_to_one;
 
 table User{
     PRIMARY int id;
     string name;
-    int age;
-    string email;
-    string password;
+    ONE_TO_ONE(Passport) passport;
 }
 
-table Review{
+table Passport{
     PRIMARY int id;
-    ONE_TO_ONE(Book) book;
-    ONE_TO_ONE(User) user;
-    double rating;
-    string comment;
-}
-
-table Publisher{
-    PRIMARY int id;
-    string name;
-    string adress;
-    char c;
-}
-
-table Order {
-    PRIMARY int id;
-    ONE_TO_ONE(User) user;
-    ONE_TO_MANY(Book) books;
-    string date;
-    string total_price;
-}
-
-table Book{
-    PRIMARY int id;
-    string title;
-    MANY_TO_MANY(Author) authors;
-    ONE_TO_ONE(Publisher) publisher;
-    bool is_bn;
-    string publication_date;
-    string price;
-    MANY_TO_ONE(Order) order;
-}
-
-table Author{
-    PRIMARY int id;
-    string name;
-    MANY_TO_MANY(Book) books;
+    int num;
 }
