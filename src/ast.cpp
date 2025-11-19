@@ -472,7 +472,7 @@ std::string Table::exrs(){
                     "custom: ")
                 << "value){ return \"" << field_name << method_value << "\" + " << "std::to_string(value);}" << std::endl;
             }
-            oss << "\tstatic const std::string " << field_name << "_between_and(int val1, int val2){ return \"" << field_name << " BETWEEN\" + " << "std::to_string(val1)" << " + \" AND \" + " << "std::to_string(val2);}" << std::endl;
+            oss << "\tstatic const std::string " << field_name << "_between_and(int val1, int val2){ return \"" << field_name << " BETWEEN \" + " << "std::to_string(val1)" << " + \" AND \" + " << "std::to_string(val2);}" << std::endl;
                 
         }else if(field_type == FieldType::String){
             for(auto [method_name, method_value] : str_exprs){
@@ -703,7 +703,7 @@ std::string AST::content(){
                     "custom: ")
                 << "value){ return \"" << field_name << method_value << "\" + " << "std::to_string(value);}" << std::endl;
             }
-            oss << "static const std::string " << field_name << "_between_and(int val1, int val2){ return \"" << field_name << " BETWEEN\" + " << "std::to_string(val1)" << " + \" AND \" + " << "std::to_string(val2);}" << std::endl;
+            oss << "static const std::string " << field_name << "_between_and(int val1, int val2){ return \"" << field_name << " BETWEEN \" + " << "std::to_string(val1)" << " + \" AND \" + " << "std::to_string(val2);}" << std::endl;
                 
         }else if(field_type == FieldType::String){
             for(auto [method_name, method_value] : str_exprs){
