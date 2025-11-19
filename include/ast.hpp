@@ -74,12 +74,9 @@ struct Import {
 
 struct AST {
     std::vector<std::shared_ptr<Table>> topological_sort();
-    std::string content();
     std::string struct_column();
     std::string struct_link();
     std::string sql_table_class();
-
-   
 
 
     std::string database_name_;
