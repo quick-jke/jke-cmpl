@@ -104,7 +104,7 @@ std::string Field::column(){
 
     oss << "\t\t\t{\"" 
         << name_ 
-        << "\", quick::ultra::sqljke::" 
+        << "\", " 
         << type_to_sql(type_)
         << ", " 
         << (is_primary_ ? "true, " : "false, ")
@@ -163,7 +163,7 @@ std::string Relation::column(){
         return oss.str();
     }
 
-    oss << "\t\t\t{\"" << field_name_ << "_id\", quick::ultra::sqljke::INT, false, false, false, \"\"}";
+    oss << "\t\t\t{\"" << field_name_ << "_id\", INT, false, false, false, \"\"}";
 
     return oss.str();
 }
@@ -187,7 +187,7 @@ std::string to_lower_string(std::string str) {
 std::string Table::content(){
     std::stringstream oss;
     
-    oss << "class " << name_ << " : public quick::ultra::sqljke::SQLTable" << "{" << std::endl;
+    oss << "class " << name_ << " : public SQLTable" << "{" << std::endl;
     oss << "public:" << std::endl;
 
     //cunstructor
@@ -252,10 +252,10 @@ std::string Table::content(){
     
 
     //namefunc
-    oss << "\tinline static const quick::ultra::sqljke::Table TABLE_NAME = quick::ultra::sqljke::Table(\"" << name_ << "\");" << std::endl; 
+    oss << "\tinline static const Table TABLE_NAME = Table(\"" << name_ << "\");" << std::endl; 
     oss << "\tstd::string table_name() const override {return \"" << name_ << "\";}" << std::endl; 
     //columns 
-    oss << "\tinline static const std::vector<quick::ultra::sqljke::Column> COLUMNS = {" << std::endl;
+    oss << "\tinline static const std::vector<Column> COLUMNS = {" << std::endl;
     for(size_t i = 0; i < fields_.size(); ++i){
         if(!fields_.at(i)->is_primary_){
             oss << fields_.at(i)->column();
@@ -277,7 +277,7 @@ std::string Table::content(){
     // }
     oss << "\t};" << std::endl << std::endl;
 
-    oss << "\tstd::vector<quick::ultra::sqljke::Column> columns() const override {" << std::endl;
+    oss << "\tstd::vector<Column> columns() const override {" << std::endl;
     oss << "\t\treturn {" << std::endl;
     for(size_t i = 0; i < fields_.size(); ++i){
         oss << fields_.at(i)->column();
@@ -364,7 +364,7 @@ std::string Table::content(){
     oss << "};\n\t}" << std::endl;
 
     //links
-    oss << "\tstd::vector<quick::ultra::sqljke::Link> links() const override {" << std::endl;
+    oss << "\tstd::vector<Link> links() const override {" << std::endl;
     oss << "\t\treturn {" << std::endl;
     // for(size_t i = 0; i < relations_.size(); ++i){
     //     if(relations_.at(i)->type_ != RelationType::ManyToMany && relations_.at(i)->type_ != RelationType::OneToMany ){
@@ -436,66 +436,66 @@ std::string Table::exrs(){
         exprs_.insert({field->name_, field->type_});
     }
     std::map<std::string, std::string> int_exprs = {
-        {"_more_than", "quick::ultra::sqljke::MORE_THAN"},        // a > 5                           
-        {"_less_than", "quick::ultra::sqljke::LESS_THAN"},        // a < 5                    
-        {"_more_or_equal", "quick::ultra::sqljke::MORE_OR_EQUAL"},    // a >=5                           
-        {"_less_or_equal", "quick::ultra::sqljke::LESS_OR_EQUAL"},    // a <=5                           
-        {"_equal", "quick::ultra::sqljke::EQUAL"},             // a = 5                      
-        {"_not_equal", "quick::ultra::sqljke::NOT_EQUAL"}          // a !=5     
+        {"_more_than", "MORE_THAN"},        // a > 5                           
+        {"_less_than", "LESS_THAN"},        // a < 5                    
+        {"_more_or_equal", "MORE_OR_EQUAL"},    // a >=5                           
+        {"_less_or_equal", "LESS_OR_EQUAL"},    // a <=5                           
+        {"_equal", "EQUAL"},             // a = 5                      
+        {"_not_equal", "NOT_EQUAL"}          // a !=5     
         // a between 5 and 10
         // in (1, 2, 3)                    
     };
     std::map<std::string, std::string> str_exprs = {
-        {"_equal", "quick::ultra::sqljke::EQUAL"},             // str = 'str'
-        {"_not_equal", "quick::ultra::sqljke::NOT_EQUAL"},         // str !='str'
-        {"_like", "quick::ultra::sqljke::LIKE"},           // str LIKE 'str'
+        {"_equal", "EQUAL"},             // str = 'str'
+        {"_not_equal", "NOT_EQUAL"},         // str !='str'
+        {"_like", "LIKE"},           // str LIKE 'str'
         // str IN ('val1', 'val2')
     };
     std::map<std::string, std::string> bool_exprs = {
-        {"_true", "quick::ultra::sqljke::IS_TRUE"},
-        {"_false", "quick::ultra::sqljke::IS_FALSE"}
+        {"_true", "IS_TRUE"},
+        {"_false", "IS_FALSE"}
     };
     std::map<std::string, std::string> null_exprs = {
-        {"_is_null", " quick::ultra::sqljke::IS_NULL"},
-        {"_is_not_null", " quick::ultra::sqljke::IS_NOT_NULL"}
+        {"_is_null", " IS_NULL"},
+        {"_is_not_null", " IS_NOT_NULL"}
     };
     
 
     for(auto [field_name, field_type] : exprs_){
         if(field_type == FieldType::Int || field_type == FieldType::Double){
             for(auto [method_name, method_value] : int_exprs){
-                oss << "\tstatic const quick::ultra::sqljke::Expression " << field_name << method_name << "(" 
+                oss << "\tstatic const Expression " << field_name << method_name << "(" 
                 << (field_type == FieldType::Int ? "int " :
                     field_type == FieldType::Double ? "double " :
                     field_type == FieldType::Bool ? "bool " :
                     field_type == FieldType::Char ? "char " :
                     "custom: ")
-                << "value){ return quick::ultra::sqljke::Expression(\"" << field_name << "\", " << method_value << ", std::to_string(value));}" << std::endl;
+                << "value){ return Expression(\"" << field_name << "\", " << method_value << ", std::to_string(value));}" << std::endl;
             }
-            oss << "\tstatic const quick::ultra::sqljke::Expression " << field_name << "_between_and(int val1, int val2){ return quick::ultra::sqljke::Expression(std::to_string(val1), quick::ultra::sqljke::BETWEEN_AND, std::to_string(val2));}" << std::endl;
+            oss << "\tstatic const Expression " << field_name << "_between_and(int val1, int val2){ return Expression(\"" << field_name <<"\", BETWEEN_AND, std::to_string(val1), std::to_string(val2));}" << std::endl;
                 
         }else if(field_type == FieldType::String){
             for(auto [method_name, method_value] : str_exprs){
-                oss << "\tstatic const quick::ultra::sqljke::Expression " << field_name << method_name
+                oss << "\tstatic const Expression " << field_name << method_name
                 << "(const std::string& str_val){"
-                << "return quick::ultra::sqljke::Expression(\"" << field_name << "\", " << method_value << ", str_val);}" 
+                << "return Expression(\"" << field_name << "\", " << method_value << ", str_val);}" 
                 << std::endl;
             }
         }else if(field_type == FieldType::Bool){
             for(auto [method_name, method_value] : bool_exprs){
-                oss << "\tstatic const quick::ultra::sqljke::Expression " << field_name << method_name
-                << "(){ return quick::ultra::sqljke::Expression(\"" << field_name << "\", " << method_value << ");}"
+                oss << "\tstatic const Expression " << field_name << method_name
+                << "(){ return Expression(\"" << field_name << "\", " << method_value << ");}"
                 << std::endl;
             }
         }
 
         for(auto [method_name, method_value] : null_exprs){
-            oss << "\tstatic const quick::ultra::sqljke::Expression " << field_name << method_name
-                << "(){ return quick::ultra::sqljke::Expression(\"" << field_name << "\", " << method_value << ");}"
+            oss << "\tstatic const Expression " << field_name << method_name
+                << "(){ return Expression(\"" << field_name << "\", " << method_value << ");}"
                 << std::endl;
         }
         if(field_type != FieldType::Bool){
-            oss << "\tstatic const quick::ultra::sqljke::Expression " << field_name << "_in(std::vector<" 
+            oss << "\tstatic const Expression " << field_name << "_in(std::vector<" 
                 << (field_type == FieldType::Int ? "int" :
                     field_type == FieldType::Double ? "double" :
                     field_type == FieldType::String ? "std::string" :
@@ -510,7 +510,7 @@ std::string Table::exrs(){
                 << "\t\t\t}" << std::endl
                 << "\t\t}" << std::endl
                 << "\t\toss << \")\";" << std::endl
-                << "\t\treturn quick::ultra::sqljke::Expression(oss.str(), quick::ultra::sqljke::IN);" << std::endl
+                << "\t\treturn Expression(\"" << field_name <<"\", IN, oss.str());" << std::endl
                 << "\t}" 
                 << std::endl;
         }

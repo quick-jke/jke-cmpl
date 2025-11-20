@@ -24,6 +24,7 @@ public:
             file << "#include <sstream>" << std::endl;
             file << "#include <memory>" << std::endl;
             file << "#include \"session.hpp\"" << std::endl;
+            file << "using namespace quick::ultra::sqljke;" << std::endl;
 
             for(auto rel : table->relations_){
                 file << "#include \"" << rel->target_table_ << ".hpp\"" << std::endl;
