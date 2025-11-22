@@ -102,7 +102,7 @@ std::string Field::getter(){
 std::string Field::column(){
     std::stringstream oss;
 
-    oss << "\t\t\t{\"" 
+    oss << "{\"" 
         << name_ 
         << "\", " 
         << type_to_sql(type_)
@@ -183,6 +183,14 @@ std::string to_lower_string(std::string str) {
     return str;
 }
 
+std::string to_upper(const std::string& str) {
+    std::string result = str;
+    std::transform(result.begin(), result.end(), result.begin(),
+        [](unsigned char c) { return std::toupper(c); }
+    );
+    return result;
+}
+
 
 std::string Table::content(){
     std::stringstream oss;
@@ -258,14 +266,14 @@ std::string Table::content(){
     oss << "\tinline static const std::vector<Column> COLUMNS = {" << std::endl;
     for(size_t i = 0; i < fields_.size(); ++i){
         if(!fields_.at(i)->is_primary_){
-            oss << fields_.at(i)->column();
+            oss << "\t\t" << fields_.at(i)->column();
             if((i != fields_.size() - 1) || relations_.size()){
                 oss << ",";
             }
             oss << std::endl;
         }
-        
     }
+    
     // for(size_t i = 0; i < relations_.size(); ++i){
     //     if(relations_.at(i)->type_ != RelationType::ManyToMany && relations_.at(i)->type_ != RelationType::OneToMany){
     //         oss << relations_.at(i)->column();
@@ -276,11 +284,14 @@ std::string Table::content(){
     //     }
     // }
     oss << "\t};" << std::endl << std::endl;
+    for(const auto& field : fields_){
+        oss << "\tinline static const Column " << to_upper(field->name_) << " = " << field->column() << ";" << std::endl; 
+    }
 
     oss << "\tstd::vector<Column> columns() const override {" << std::endl;
     oss << "\t\treturn {" << std::endl;
     for(size_t i = 0; i < fields_.size(); ++i){
-        oss << fields_.at(i)->column();
+        oss << "\t\t\t" << fields_.at(i)->column();
         if((i != fields_.size() - 1) || relations_.size()){
             oss << ",";
         }
