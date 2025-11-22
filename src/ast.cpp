@@ -21,7 +21,7 @@ std::string type_to_sql(FieldType type){
         break;
     }
     case FieldType::Bool:{
-        return "DOUBLE";
+        return "BOOL";
         break;
     }
     case FieldType::Char:{
