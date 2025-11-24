@@ -102,7 +102,7 @@ std::string Field::getter(){
 std::string Field::column(){
     std::stringstream oss;
 
-    oss << "{\"" 
+    oss << "Column{\"" 
         << name_ 
         << "\", " 
         << type_to_sql(type_)
@@ -263,7 +263,7 @@ std::string Table::content(){
     oss << "\tinline static const Table TABLE_NAME = Table(\"" << name_ << "\");" << std::endl; 
     oss << "\tstd::string table_name() const override {return \"" << name_ << "\";}" << std::endl; 
     //columns 
-    oss << "\tinline static const std::vector<Column> COLUMNS = {" << std::endl;
+    oss << "\tinline static const std::vector<std::variant<Column, Aggregate>> COLUMNS = {" << std::endl;
     for(size_t i = 0; i < fields_.size(); ++i){
         if(!fields_.at(i)->is_primary_){
             oss << "\t\t" << fields_.at(i)->column();
@@ -273,16 +273,7 @@ std::string Table::content(){
             oss << std::endl;
         }
     }
-    
-    // for(size_t i = 0; i < relations_.size(); ++i){
-    //     if(relations_.at(i)->type_ != RelationType::ManyToMany && relations_.at(i)->type_ != RelationType::OneToMany){
-    //         oss << relations_.at(i)->column();
-    //         if(i != relations_.size() - 1){
-    //             oss << ",";
-    //         }
-    //         oss << std::endl;
-    //     }
-    // }
+ 
     oss << "\t};" << std::endl << std::endl;
     for(const auto& field : fields_){
         oss << "\tinline static const Column " << to_upper(field->name_) << " = " << field->column() << ";" << std::endl; 
@@ -298,15 +289,7 @@ std::string Table::content(){
         oss << std::endl;
         
     }
-    // for(size_t i = 0; i < relations_.size(); ++i){
-    //     if(relations_.at(i)->type_ != RelationType::ManyToMany && relations_.at(i)->type_ != RelationType::OneToMany){
-    //         oss << relations_.at(i)->column();
-    //         if(i != relations_.size() - 1){
-    //             oss << ",";
-    //         }
-    //         oss << std::endl;
-    //     }
-    // }
+
     oss << "\t\t};" << std::endl << "\t}" << std::endl;
 
     //column_names
@@ -361,33 +344,13 @@ std::string Table::content(){
         }
         
     }
-    // if(fields_.size()){
-    //     oss << ", ";
-    // }
-    // for(size_t i = 0; i < relations_.size(); ++i){
-    //     if(relations_.at(i)->type_ != RelationType::ManyToMany && relations_.at(i)->type_ != RelationType::OneToMany ){
-    //         oss << "std::to_string(" << relations_.at(i)->field_name_ << "_->id())";
-    //         if(i != relations_.size() - 1){
-    //             oss << ", ";
-    //         }
-    //     }
-    // }
+
     oss << "};\n\t}" << std::endl;
 
     //links
     oss << "\tstd::vector<Link> links() const override {" << std::endl;
     oss << "\t\treturn {" << std::endl;
-    // for(size_t i = 0; i < relations_.size(); ++i){
-    //     if(relations_.at(i)->type_ != RelationType::ManyToMany && relations_.at(i)->type_ != RelationType::OneToMany ){
-    //         oss << relations_.at(i)->link();
-    //         if(i != relations_.size() - 1){
-    //             oss << "," << std::endl;
-    //         }else{
-    //             oss << std::endl;
-    //         }
-    //     }
-        
-    // }
+
     oss << "\t\t};" << std::endl;
     oss << "\t}" << std::endl;
     
@@ -400,26 +363,6 @@ std::string Table::content(){
         oss << field->getter() << std::endl;
     }
 
-    // for(auto relation : relations_){
-    //     oss << relation->getter() << std::endl;
-    //     oss << relation->setter() << std::endl;
-    // }
-
-    // oss << "\n\tstd::vector<std::shared_ptr<quick::ultra::sqljke::SQLTable>> get_dependent_objects() const override {" << std::endl;
-    // oss << "\t\tstd::vector<std::shared_ptr<quick::ultra::sqljke::SQLTable>> result;" << std::endl;
-
-    // for (const auto& rel : relations_) {
-    //     if (rel->type_ == RelationType::OneToOne || rel->type_ == RelationType::ManyToOne) {
-    //         std::string field_name = rel->field_name_ + "_";
-    //         oss << "\t\tif (" << field_name << " && " << field_name << "->id() == 0) {" << std::endl;
-    //         oss << "\t\t\tresult.push_back(" << field_name << ");" << std::endl;
-    //         oss << "\t\t}" << std::endl;
-    //     }
-    //     // OneToMany и ManyToMany — не требуют сохранения "до", обычно они дочерние
-    // }
-
-    // oss << "\t\treturn result;" << std::endl;
-    // oss << "\t}" << std::endl;
 
     oss << exrs();
 
@@ -428,104 +371,13 @@ std::string Table::content(){
     for(auto field : fields_){
         oss << field->to_string();
     }
-    //relations
-    // relations_.size() && oss << "//Relations:\n";
-    
-    // for(auto rel : relations_){
-    //     oss << rel->to_string();
-    // }
 
-    // oss << "\tstd::vector<std::shared_ptr<quick::ultra::sqljke::IRelation>> relations_;" << std::endl;
     oss << "};" << std::endl;
     return oss.str();
 }
 
 std::string Table::exrs(){
     std::stringstream oss;
-    // std::set<std::pair<std::string, FieldType>> exprs_;
-    // for(auto field : fields_){
-    //     exprs_.insert({field->name_, field->type_});
-    // }
-    // std::map<std::string, std::string> int_exprs = {
-    //     {"_more_than", "MORE_THAN"},        // a > 5                           
-    //     {"_less_than", "LESS_THAN"},        // a < 5                    
-    //     {"_more_or_equal", "MORE_OR_EQUAL"},    // a >=5                           
-    //     {"_less_or_equal", "LESS_OR_EQUAL"},    // a <=5                           
-    //     {"_equal", "EQUAL"},             // a = 5                      
-    //     {"_not_equal", "NOT_EQUAL"}          // a !=5     
-    //     // a between 5 and 10
-    //     // in (1, 2, 3)                    
-    // };
-    // std::map<std::string, std::string> str_exprs = {
-    //     {"_equal", "EQUAL"},             // str = 'str'
-    //     {"_not_equal", "NOT_EQUAL"},         // str !='str'
-    //     {"_like", "LIKE"},           // str LIKE 'str'
-    //     // str IN ('val1', 'val2')
-    // };
-    // std::map<std::string, std::string> bool_exprs = {
-    //     {"_true", "IS_TRUE"},
-    //     {"_false", "IS_FALSE"}
-    // };
-    // std::map<std::string, std::string> null_exprs = {
-    //     {"_is_null", " IS_NULL"},
-    //     {"_is_not_null", " IS_NOT_NULL"}
-    // };
-    
-
-    // for(auto [field_name, field_type] : exprs_){
-    //     if(field_type == FieldType::Int || field_type == FieldType::Double){
-    //         for(auto [method_name, method_value] : int_exprs){
-    //             oss << "\tstatic const Expression " << field_name << method_name << "(" 
-    //             << (field_type == FieldType::Int ? "int " :
-    //                 field_type == FieldType::Double ? "double " :
-    //                 field_type == FieldType::Bool ? "bool " :
-    //                 field_type == FieldType::Char ? "char " :
-    //                 "custom: ")
-    //             << "value){ return Expression(\"" << field_name << "\", " << method_value << ", std::to_string(value));}" << std::endl;
-    //         }
-    //         oss << "\tstatic const Expression " << field_name << "_between_and(int val1, int val2){ return Expression(\"" << field_name <<"\", BETWEEN_AND, std::to_string(val1), std::to_string(val2));}" << std::endl;
-                
-    //     }else if(field_type == FieldType::String){
-    //         for(auto [method_name, method_value] : str_exprs){
-    //             oss << "\tstatic const Expression " << field_name << method_name
-    //             << "(const std::string& str_val){"
-    //             << "return Expression(\"" << field_name << "\", " << method_value << ", str_val);}" 
-    //             << std::endl;
-    //         }
-    //     }else if(field_type == FieldType::Bool){
-    //         for(auto [method_name, method_value] : bool_exprs){
-    //             oss << "\tstatic const Expression " << field_name << method_name
-    //             << "(){ return Expression(\"" << field_name << "\", " << method_value << ");}"
-    //             << std::endl;
-    //         }
-    //     }
-
-    //     for(auto [method_name, method_value] : null_exprs){
-    //         oss << "\tstatic const Expression " << field_name << method_name
-    //             << "(){ return Expression(\"" << field_name << "\", " << method_value << ");}"
-    //             << std::endl;
-    //     }
-    //     if(field_type != FieldType::Bool){
-    //         oss << "\tstatic const Expression " << field_name << "_in(std::vector<" 
-    //             << (field_type == FieldType::Int ? "int" :
-    //                 field_type == FieldType::Double ? "double" :
-    //                 field_type == FieldType::String ? "std::string" :
-    //                 field_type == FieldType::Char ? "char" : "custom: ")
-    //             << "> values){" << std::endl
-    //             << "\t\tstd::stringstream oss;" << std::endl
-    //             << "\t\toss << \"(\";" << std::endl
-    //             << "\t\tfor(size_t i = 0; i < values.size(); ++i){" << std::endl
-    //             << "\t\t\toss << values.at(i);" << std::endl
-    //             << "\t\t\tif(i != values.size() - 1){" << std::endl
-    //             << "\t\t\t\toss << \", \";" << std::endl
-    //             << "\t\t\t}" << std::endl
-    //             << "\t\t}" << std::endl
-    //             << "\t\toss << \")\";" << std::endl
-    //             << "\t\treturn Expression(\"" << field_name <<"\", IN, oss.str());" << std::endl
-    //             << "\t}" 
-    //             << std::endl;
-    //     }
-    // }                                               
     return oss.str();
 }
 
