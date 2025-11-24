@@ -442,90 +442,90 @@ std::string Table::content(){
 
 std::string Table::exrs(){
     std::stringstream oss;
-    std::set<std::pair<std::string, FieldType>> exprs_;
-    for(auto field : fields_){
-        exprs_.insert({field->name_, field->type_});
-    }
-    std::map<std::string, std::string> int_exprs = {
-        {"_more_than", "MORE_THAN"},        // a > 5                           
-        {"_less_than", "LESS_THAN"},        // a < 5                    
-        {"_more_or_equal", "MORE_OR_EQUAL"},    // a >=5                           
-        {"_less_or_equal", "LESS_OR_EQUAL"},    // a <=5                           
-        {"_equal", "EQUAL"},             // a = 5                      
-        {"_not_equal", "NOT_EQUAL"}          // a !=5     
-        // a between 5 and 10
-        // in (1, 2, 3)                    
-    };
-    std::map<std::string, std::string> str_exprs = {
-        {"_equal", "EQUAL"},             // str = 'str'
-        {"_not_equal", "NOT_EQUAL"},         // str !='str'
-        {"_like", "LIKE"},           // str LIKE 'str'
-        // str IN ('val1', 'val2')
-    };
-    std::map<std::string, std::string> bool_exprs = {
-        {"_true", "IS_TRUE"},
-        {"_false", "IS_FALSE"}
-    };
-    std::map<std::string, std::string> null_exprs = {
-        {"_is_null", " IS_NULL"},
-        {"_is_not_null", " IS_NOT_NULL"}
-    };
+    // std::set<std::pair<std::string, FieldType>> exprs_;
+    // for(auto field : fields_){
+    //     exprs_.insert({field->name_, field->type_});
+    // }
+    // std::map<std::string, std::string> int_exprs = {
+    //     {"_more_than", "MORE_THAN"},        // a > 5                           
+    //     {"_less_than", "LESS_THAN"},        // a < 5                    
+    //     {"_more_or_equal", "MORE_OR_EQUAL"},    // a >=5                           
+    //     {"_less_or_equal", "LESS_OR_EQUAL"},    // a <=5                           
+    //     {"_equal", "EQUAL"},             // a = 5                      
+    //     {"_not_equal", "NOT_EQUAL"}          // a !=5     
+    //     // a between 5 and 10
+    //     // in (1, 2, 3)                    
+    // };
+    // std::map<std::string, std::string> str_exprs = {
+    //     {"_equal", "EQUAL"},             // str = 'str'
+    //     {"_not_equal", "NOT_EQUAL"},         // str !='str'
+    //     {"_like", "LIKE"},           // str LIKE 'str'
+    //     // str IN ('val1', 'val2')
+    // };
+    // std::map<std::string, std::string> bool_exprs = {
+    //     {"_true", "IS_TRUE"},
+    //     {"_false", "IS_FALSE"}
+    // };
+    // std::map<std::string, std::string> null_exprs = {
+    //     {"_is_null", " IS_NULL"},
+    //     {"_is_not_null", " IS_NOT_NULL"}
+    // };
     
 
-    for(auto [field_name, field_type] : exprs_){
-        if(field_type == FieldType::Int || field_type == FieldType::Double){
-            for(auto [method_name, method_value] : int_exprs){
-                oss << "\tstatic const Expression " << field_name << method_name << "(" 
-                << (field_type == FieldType::Int ? "int " :
-                    field_type == FieldType::Double ? "double " :
-                    field_type == FieldType::Bool ? "bool " :
-                    field_type == FieldType::Char ? "char " :
-                    "custom: ")
-                << "value){ return Expression(\"" << field_name << "\", " << method_value << ", std::to_string(value));}" << std::endl;
-            }
-            oss << "\tstatic const Expression " << field_name << "_between_and(int val1, int val2){ return Expression(\"" << field_name <<"\", BETWEEN_AND, std::to_string(val1), std::to_string(val2));}" << std::endl;
+    // for(auto [field_name, field_type] : exprs_){
+    //     if(field_type == FieldType::Int || field_type == FieldType::Double){
+    //         for(auto [method_name, method_value] : int_exprs){
+    //             oss << "\tstatic const Expression " << field_name << method_name << "(" 
+    //             << (field_type == FieldType::Int ? "int " :
+    //                 field_type == FieldType::Double ? "double " :
+    //                 field_type == FieldType::Bool ? "bool " :
+    //                 field_type == FieldType::Char ? "char " :
+    //                 "custom: ")
+    //             << "value){ return Expression(\"" << field_name << "\", " << method_value << ", std::to_string(value));}" << std::endl;
+    //         }
+    //         oss << "\tstatic const Expression " << field_name << "_between_and(int val1, int val2){ return Expression(\"" << field_name <<"\", BETWEEN_AND, std::to_string(val1), std::to_string(val2));}" << std::endl;
                 
-        }else if(field_type == FieldType::String){
-            for(auto [method_name, method_value] : str_exprs){
-                oss << "\tstatic const Expression " << field_name << method_name
-                << "(const std::string& str_val){"
-                << "return Expression(\"" << field_name << "\", " << method_value << ", str_val);}" 
-                << std::endl;
-            }
-        }else if(field_type == FieldType::Bool){
-            for(auto [method_name, method_value] : bool_exprs){
-                oss << "\tstatic const Expression " << field_name << method_name
-                << "(){ return Expression(\"" << field_name << "\", " << method_value << ");}"
-                << std::endl;
-            }
-        }
+    //     }else if(field_type == FieldType::String){
+    //         for(auto [method_name, method_value] : str_exprs){
+    //             oss << "\tstatic const Expression " << field_name << method_name
+    //             << "(const std::string& str_val){"
+    //             << "return Expression(\"" << field_name << "\", " << method_value << ", str_val);}" 
+    //             << std::endl;
+    //         }
+    //     }else if(field_type == FieldType::Bool){
+    //         for(auto [method_name, method_value] : bool_exprs){
+    //             oss << "\tstatic const Expression " << field_name << method_name
+    //             << "(){ return Expression(\"" << field_name << "\", " << method_value << ");}"
+    //             << std::endl;
+    //         }
+    //     }
 
-        for(auto [method_name, method_value] : null_exprs){
-            oss << "\tstatic const Expression " << field_name << method_name
-                << "(){ return Expression(\"" << field_name << "\", " << method_value << ");}"
-                << std::endl;
-        }
-        if(field_type != FieldType::Bool){
-            oss << "\tstatic const Expression " << field_name << "_in(std::vector<" 
-                << (field_type == FieldType::Int ? "int" :
-                    field_type == FieldType::Double ? "double" :
-                    field_type == FieldType::String ? "std::string" :
-                    field_type == FieldType::Char ? "char" : "custom: ")
-                << "> values){" << std::endl
-                << "\t\tstd::stringstream oss;" << std::endl
-                << "\t\toss << \"(\";" << std::endl
-                << "\t\tfor(size_t i = 0; i < values.size(); ++i){" << std::endl
-                << "\t\t\toss << values.at(i);" << std::endl
-                << "\t\t\tif(i != values.size() - 1){" << std::endl
-                << "\t\t\t\toss << \", \";" << std::endl
-                << "\t\t\t}" << std::endl
-                << "\t\t}" << std::endl
-                << "\t\toss << \")\";" << std::endl
-                << "\t\treturn Expression(\"" << field_name <<"\", IN, oss.str());" << std::endl
-                << "\t}" 
-                << std::endl;
-        }
-    }                                               
+    //     for(auto [method_name, method_value] : null_exprs){
+    //         oss << "\tstatic const Expression " << field_name << method_name
+    //             << "(){ return Expression(\"" << field_name << "\", " << method_value << ");}"
+    //             << std::endl;
+    //     }
+    //     if(field_type != FieldType::Bool){
+    //         oss << "\tstatic const Expression " << field_name << "_in(std::vector<" 
+    //             << (field_type == FieldType::Int ? "int" :
+    //                 field_type == FieldType::Double ? "double" :
+    //                 field_type == FieldType::String ? "std::string" :
+    //                 field_type == FieldType::Char ? "char" : "custom: ")
+    //             << "> values){" << std::endl
+    //             << "\t\tstd::stringstream oss;" << std::endl
+    //             << "\t\toss << \"(\";" << std::endl
+    //             << "\t\tfor(size_t i = 0; i < values.size(); ++i){" << std::endl
+    //             << "\t\t\toss << values.at(i);" << std::endl
+    //             << "\t\t\tif(i != values.size() - 1){" << std::endl
+    //             << "\t\t\t\toss << \", \";" << std::endl
+    //             << "\t\t\t}" << std::endl
+    //             << "\t\t}" << std::endl
+    //             << "\t\toss << \")\";" << std::endl
+    //             << "\t\treturn Expression(\"" << field_name <<"\", IN, oss.str());" << std::endl
+    //             << "\t}" 
+    //             << std::endl;
+    //     }
+    // }                                               
     return oss.str();
 }
 
