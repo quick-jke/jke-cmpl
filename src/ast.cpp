@@ -263,7 +263,7 @@ std::string Table::content(){
     oss << "\tinline static const Table TABLE_NAME = Table(\"" << name_ << "\");" << std::endl; 
     oss << "\tstd::string table_name() const override {return \"" << name_ << "\";}" << std::endl; 
     //columns 
-    oss << "\tinline static const std::vector<std::variant<Column, Aggregate>> COLUMNS = {" << std::endl;
+    oss << "\tinline static const std::vector<std::variant<Column, Aggregate, Scalar>> COLUMNS = {" << std::endl;
     for(size_t i = 0; i < fields_.size(); ++i){
         if(!fields_.at(i)->is_primary_){
             oss << "\t\t" << fields_.at(i)->column();
