@@ -54,6 +54,7 @@ struct Relation {
     std::string link();
     std::string getter();
     std::string setter();
+    std::string field();
     
     RelationType type_;
     std::string target_table_;

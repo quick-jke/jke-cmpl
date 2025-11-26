@@ -141,6 +141,23 @@ std::string Relation::to_string(){
     return oss.str();
 }
 
+std::string Relation::field(){
+    std::stringstream oss;
+
+    switch (type_)
+    {
+    case RelationType::OneToOne:{
+        oss << "\tint " << field_name_ << "_id_;";
+        break;
+    }
+    
+    default:
+        break;
+    }
+
+    return oss.str();
+}
+
 std::string Relation::getter(){
     std::stringstream oss;
     if(type_ == RelationType::OneToOne){
@@ -163,7 +180,7 @@ std::string Relation::column(){
         return oss.str();
     }
 
-    oss << "\t\t\t{\"" << field_name_ << "_id\", INT, false, false, false, \"\"}";
+    oss << "\t\t\tColumn{\"" << field_name_ << "_id\", INT, false, false, false, \"\"}";
 
     return oss.str();
 }
@@ -290,6 +307,16 @@ std::string Table::content(){
         
     }
 
+    for(size_t i = 0; i < relations_.size(); ++i){
+        if(relations_.at(i)->type_ != RelationType::ManyToMany && relations_.at(i)->type_ != RelationType::OneToMany){
+            oss << relations_.at(i)->column();
+            if(i != relations_.size() - 1){
+                oss << ",";
+            }
+            oss << std::endl;
+        }
+    }
+
     oss << "\t\t};" << std::endl << "\t}" << std::endl;
 
     //column_names
@@ -344,7 +371,17 @@ std::string Table::content(){
         }
         
     }
-
+    if(fields_.size()){
+        oss << ", ";
+    }
+    for(size_t i = 0; i < relations_.size(); ++i){
+        if(relations_.at(i)->type_ != RelationType::ManyToMany && relations_.at(i)->type_ != RelationType::OneToMany ){
+            oss << "std::to_string(" << relations_.at(i)->field_name_ << "_id_)";
+            if(i != relations_.size() - 1){
+                oss << ", ";
+            }
+        }
+    }
     oss << "};\n\t}" << std::endl;
 
     //links
@@ -370,6 +407,10 @@ std::string Table::content(){
     oss << "\nprivate:" << std::endl;
     for(auto field : fields_){
         oss << field->to_string();
+    }
+
+    for(auto rel : relations_){
+        oss << rel->field() << std::endl;
     }
 
     oss << "};" << std::endl;
