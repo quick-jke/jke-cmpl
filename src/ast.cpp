@@ -147,7 +147,7 @@ std::string Relation::field(){
     switch (type_)
     {
     case RelationType::OneToOne:{
-        oss << "\tint " << field_name_ << "_id_;";
+        oss << "\tstd::shared_ptr<SQLTable> " << field_name_ << "_;";
         break;
     }
     
@@ -161,7 +161,7 @@ std::string Relation::field(){
 std::string Relation::getter(){
     std::stringstream oss;
     if(type_ == RelationType::OneToOne){
-        oss << "\tstd::shared_ptr<" << target_table_ << "> " << field_name_ << "(){ return " << field_name_ << "_;}"; 
+        oss << "\tstd::shared_ptr<SQLTable> " << field_name_ << "(){ return " << field_name_ << "_;}"; 
     }
     return oss.str();
 }
@@ -169,7 +169,7 @@ std::string Relation::getter(){
 std::string Relation::setter(){
     std::stringstream oss;
     if(type_ == RelationType::OneToOne){
-        oss << "\tvoid set_" << field_name_ << "(std::shared_ptr<" << target_table_ << "> " << field_name_ << "){ " << field_name_ << "_ = " << field_name_ << ";}"; 
+        oss << "\tvoid set_" << field_name_ << "(std::shared_ptr<SQLTable> " << field_name_ << "){ " << field_name_ << "_ = " << field_name_ << ";}"; 
     }
     return oss.str();
 }
@@ -206,6 +206,25 @@ std::string to_upper(const std::string& str) {
         [](unsigned char c) { return std::toupper(c); }
     );
     return result;
+}
+
+std::string Table::get_dependent_objects(){
+    std::stringstream oss;
+
+    oss << "\nstd::vector<std::shared_ptr<SQLTable>> get_dependent_objects() const override {\n\treturn {\n";
+
+
+    for(size_t i = 0; i < relations_.size(); ++i){
+        oss << "\t\t" << relations_.at(i)->field_name_ << "_";
+        if(i = relations_.size() - 1){
+            oss << ";";
+        }
+        oss << std::endl;
+            
+    }
+
+    oss << "\t};\n}";
+    return oss.str();
 }
 
 
@@ -376,7 +395,7 @@ std::string Table::content(){
     }
     for(size_t i = 0; i < relations_.size(); ++i){
         if(relations_.at(i)->type_ != RelationType::ManyToMany && relations_.at(i)->type_ != RelationType::OneToMany ){
-            oss << "std::to_string(" << relations_.at(i)->field_name_ << "_id_)";
+            oss << "std::to_string(" << relations_.at(i)->field_name_ << "_->id())";
             if(i != relations_.size() - 1){
                 oss << ", ";
             }
@@ -387,7 +406,9 @@ std::string Table::content(){
     //links
     oss << "\tstd::vector<Link> links() const override {" << std::endl;
     oss << "\t\treturn {" << std::endl;
-
+    for(auto rel : relations_){
+        oss << rel->link() << std::endl;
+    }
     oss << "\t\t};" << std::endl;
     oss << "\t}" << std::endl;
     
@@ -400,8 +421,12 @@ std::string Table::content(){
         oss << field->getter() << std::endl;
     }
 
+    for(auto rel : relations_){
+        oss << rel->setter() << std::endl;
+        oss << rel->getter() << std::endl;
+    }
 
-    oss << exrs();
+    oss << get_dependent_objects() << std::endl;
 
     //private fields
     oss << "\nprivate:" << std::endl;
@@ -417,10 +442,6 @@ std::string Table::content(){
     return oss.str();
 }
 
-std::string Table::exrs(){
-    std::stringstream oss;
-    return oss.str();
-}
 
 
     //AST

@@ -26,9 +26,9 @@ public:
             file << "#include \"session.hpp\"" << std::endl;
             file << "using namespace quick::ultra::sqljke;" << std::endl;
 
-            for(auto rel : table->relations_){
-                file << "#include \"" << rel->target_table_ << ".hpp\"" << std::endl;
-            }
+            // for(auto rel : table->relations_){
+            //     file << "#include \"" << rel->target_table_ << ".hpp\"" << std::endl;
+            // }
             
             file << "namespace " << ast_->database_name_ << "{" << std::endl;
             

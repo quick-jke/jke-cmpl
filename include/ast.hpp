@@ -63,7 +63,7 @@ struct Relation {
 
 struct Table {
     std::string content();
-    std::string exrs();
+    std::string get_dependent_objects();
     std::string name_;
     std::vector<std::shared_ptr<Field>> fields_;
     std::vector<std::shared_ptr<Relation>> relations_;
