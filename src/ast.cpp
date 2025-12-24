@@ -147,7 +147,7 @@ std::string Relation::field(){
     switch (type_)
     {
     case RelationType::OneToOne:{
-        oss << "\tstd::shared_ptr<SQLTable> " << field_name_ << "_;";
+        oss << "\tstd::shared_ptr<SQLTable> " << field_name_ << "_;" << std::endl;
         break;
     }
     
@@ -155,13 +155,16 @@ std::string Relation::field(){
         break;
     }
 
+    oss << "\tint " << field_name_ << "_id_;";
+
     return oss.str();
 }
 
 std::string Relation::getter(){
     std::stringstream oss;
     if(type_ == RelationType::OneToOne){
-        oss << "\tstd::shared_ptr<SQLTable> " << field_name_ << "(){ return " << field_name_ << "_;}"; 
+        oss << "\tstd::shared_ptr<SQLTable> " << field_name_ << "(){ return " << field_name_ << "_;}" << std::endl; 
+        oss << "\tint " << field_name_ << "_id(){return " << field_name_ << "_id_;}";
     }
     return oss.str();
 }
@@ -169,7 +172,8 @@ std::string Relation::getter(){
 std::string Relation::setter(){
     std::stringstream oss;
     if(type_ == RelationType::OneToOne){
-        oss << "\tvoid set_" << field_name_ << "(std::shared_ptr<SQLTable> " << field_name_ << "){ " << field_name_ << "_ = " << field_name_ << ";}"; 
+        oss << "\tvoid set_" << field_name_ << "(std::shared_ptr<SQLTable> " << field_name_ << "){ " << field_name_ << "_ = " << field_name_ << ";}" << std::endl; 
+        oss << "\tvoid set_" << field_name_ << "_id(int " << field_name_ << "_id){ " << field_name_ << "_id_ = " << field_name_ << "_id;}";
     }
     return oss.str();
 }
@@ -269,6 +273,9 @@ std::string Table::content(){
                 break;
             }
             oss << "(\"" << field->name_ << "\");" << std::endl;
+        }
+        for(size_t i = 0; i < relations_.size(); ++i){
+            oss << "\t\t" << relations_.at(i)->field_name_ << "_id_ = rs.get_int(\"" << relations_.at(i)->field_name_ << "_id\");" << std::endl;
         }
         oss << "\t}" << std::endl;
     }
