@@ -9,23 +9,23 @@ std::string type_to_sql(FieldType type){
     switch (type)
     {
     case FieldType::Int:{
-        return "INT";
+        return "TYPE::INT";
         break;
     }
     case FieldType::String:{
-        return "VARCHAR";
+        return "TYPE::VARCHAR";
         break;
     }
     case FieldType::Double:{
-        return "DOUBLE";
+        return "TYPE::DOUBLE";
         break;
     }
     case FieldType::Bool:{
-        return "BOOL";
+        return "TYPE::BOOL";
         break;
     }
     case FieldType::Char:{
-        return "CHAR";
+        return "TYPE::CHAR";
         break;
     }
     default:
@@ -184,7 +184,7 @@ std::string Relation::column(){
         return oss.str();
     }
 
-    oss << "\t\t\tColumn{\"" << field_name_ << "_id\", INT, false, false, false, \"\"}";
+    oss << "\t\t\tColumn{\"" << field_name_ << "_id\", TYPE::INT, false, false, false, \"\"}";
 
     return oss.str();
 }
