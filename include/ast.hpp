@@ -44,6 +44,8 @@ struct Field {
     FieldType type_;
     std::string custom_type_; 
     bool is_primary_ = false;
+    bool is_unique_ = false;
+    bool is_not_null_ = false;
     
 };
 

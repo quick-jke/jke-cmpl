@@ -109,7 +109,8 @@ std::string Field::column(){
         << ", " 
         << (is_primary_ ? "true, " : "false, ")
         << (is_primary_ ? "true, " : "false, ") 
-        << "false, " 
+        << (is_primary_ ? "false, " : (is_not_null_? "false, ": "true, "))
+        << (is_unique_  ? "true, " : "false, ")
         << "\"\""
         << "}";
 

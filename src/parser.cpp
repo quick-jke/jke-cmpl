@@ -80,6 +80,18 @@ std::string Parser::parse_identifier() {
 }
 
 std::shared_ptr<Field> Parser::parse_field() {
+    bool is_unique = false;
+    bool is_not_null = false;
+    
+    while (current_token_ == tok_unique || current_token_ == tok_notnull) {
+        if (current_token_ == tok_unique) {
+            is_unique = true;
+        } else if (current_token_ == tok_notnull) {
+            is_not_null = true;
+        }
+        advance();
+    }
+
     std::string type_str;
     FieldType type;
 
@@ -95,16 +107,25 @@ std::shared_ptr<Field> Parser::parse_field() {
             else type = FieldType::Custom;
             break;
         default:
-            throw std::runtime_error("Unexpected type: ");
+            throw std::runtime_error("Expected type after modifiers, got: " + lexer_->id_str());
     }
+    
     std::string field_name = parse_identifier();
-    advance(); 
 
+    if (current_token_ != ';') throw std::runtime_error("Expected ';' after field");
+    advance();
+
+    std::shared_ptr<Field> field;
     if (type == FieldType::Custom) {
-        return std::make_shared<Field>(field_name, type_str);
+        field = std::make_shared<Field>(field_name, type_str);
     } else {
-        return std::make_shared<Field>(field_name, type);
+        field = std::make_shared<Field>(field_name, type);
     }
+    
+    field->is_unique_ = is_unique;
+    field->is_not_null_ = is_not_null;
+    
+    return field;
 }
 
 void Parser::parse_database() {
