@@ -185,7 +185,7 @@ std::string Relation::column(){
         return oss.str();
     }
 
-    oss << "\t\t\tColumn{\"" << field_name_ << "_id\", TYPE::INT, false, false, false, \"\"}";
+    oss << "\t\t\tColumn{\"" << field_name_ << "_id\", TYPE::INT, false, false, false, false, \"\"}";
 
     return oss.str();
 }
