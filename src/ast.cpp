@@ -151,6 +151,20 @@ std::string Relation::field(){
         oss << "\tstd::shared_ptr<SQLTable> " << field_name_ << "_;" << std::endl;
         break;
     }
+
+    case RelationType::ManyToOne:{
+        oss << "\tstd::shared_ptr<SQLTable> " << field_name_ << "_;" << std::endl;
+        break;
+    }
+
+    case RelationType::OneToMany:{
+        oss << "\tstd::vector<std::shared_ptr<SQLTable>> " << field_name_ << "_;" << std::endl;
+        break;
+    }
+    case RelationType::ManyToMany:{
+        oss << "\tstd::vector<std::shared_ptr<SQLTable>> " << field_name_ << "_;" << std::endl;
+        break;
+    }
     
     default:
         break;
@@ -192,7 +206,7 @@ std::string Relation::column(){
 
 std::string Relation::link(){
     std::stringstream oss;
-    oss << "\t\t\t{\"" << field_name_ << "_id\", \"" << target_table_  << "\", \"id\"" << "}";
+    oss << "\t\t\t{\"" << field_name_ << "_id\", \"" << target_table_  << "\", \"id\"" << "},";
     return oss.str();
 }
 
